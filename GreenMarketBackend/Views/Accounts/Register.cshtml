@@ -1,0 +1,35 @@
+﻿@{
+    ViewData["Title"] = "Register";
+}
+
+<div>
+    <div class="container d-flex flex-column justify-content-center align-items-center vh-100">
+        <div class="card shadow-sm w-100" style="max-width: 400px;">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4">Register for Green Market</h3>
+                <form method="post" action="/account/register" autocomplete="on">
+                    <div class="mb-3">
+                        <label for="inputUsername" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="inputUsername" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputEmail" class="form-label">Email address</label>
+                        <input type="email" class="form-control" id="inputEmail" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputPassword" class="form-label">Password</label>
+                        <input type="password" autocomplete="new-password" class="form-control" id="inputPassword" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputConfirmPassword" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="inputConfirmPassword" name="confirmPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Register</button>
+                    <div class="text-center mt-3">
+                        Already have an account?  <a class="link-primary" asp-controller="Accounts" asp-action="Login">Login</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

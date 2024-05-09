@@ -1,0 +1,32 @@
+﻿@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div>
+    <div class="container d-flex flex-column justify-content-center align-items-center vh-100">
+        <div class="card shadow-sm w-100" style="max-width: 400px;">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4">Login to Green Market</h3>
+                <form method="post" action="/account/login">
+                    <div class="mb-3">
+                        <label for="inputEmail" class="form-label">Email address</label>
+                        <input type="email" class="form-control" id="inputEmail" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputPassword" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="inputPassword" name="password" autocomplete="current-password" required>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="rememberMe" name="rememberMe">
+                        <label class="form-check-label" for="rememberMe">Remember Me</label>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Login</button>
+                    <div class="text-center mt-3">
+                        Don't have an account? <a class="link-primary" asp-controller="Accounts" asp-action="Register">Register</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

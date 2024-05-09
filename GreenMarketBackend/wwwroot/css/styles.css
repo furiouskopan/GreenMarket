@@ -37,9 +37,13 @@ footer p {
     margin: 0;
 }
 
-.navbar {
-    background: transparent !important;
-    box-shadow: none;
+/*.navbar {*/
+    /*background: transparent !important;*/
+    /*box-shadow: none;
+}*/
+
+.navbarAcc {
+    background: green;
 }
 
 .navbar-nav .nav-link {

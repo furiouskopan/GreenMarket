@@ -2,37 +2,52 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-public class Product
+namespace GreenMarketBackend.Models
 {
-    [Key]
-    public int ProductId { get; set; }
+    public class Product
+    {
+        [Key]
+        public int ProductId { get; set; }
 
-    [Required]
-    [StringLength(100)]
-    public string Name { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; }
 
-    [Required]
-    public string Description { get; set; }
+        [Required]
+        public string Description { get; set; }
 
-    [Required]
-    [Column(TypeName = "decimal(18,2)")]
-    public decimal Price { get; set; }
+        [Required]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Price { get; set; }
 
-    [Required]
-    public string Category { get; set; }
+        [Required]
+        public int StockQuantity { get; set; }
 
-    [Required]
-    public int StockQuantity { get; set; }
+        [Required]
+        public string ImageURL { get; set; }
+        [Required]
+        public string Pesticides { get; set; }
+        [Required]
+        public string Origin { get; set; }
 
-    [Required]
-    public string ImageURL { get; set; }
+        [Required]
+        public DateTime CreatedDate { get; set; }
 
-    [Required]
-    public DateTime CreatedDate { get; set; }
+        [Required]
+        public DateTime HarvestDate { get; set; }
 
-    [ForeignKey("User")]
-    public string CreatedByUserId { get; set; }
+        [ForeignKey("User")]
+        public string CreatedByUserId { get; set; }
 
-    // Navigation property to represent the user who created the product
-    //public virtual ApplicationUser CreatedByUser { get; set; }
+        //Navigation property to represent the user who created the product
+        public virtual ApplicationUser CreatedByUser { get; set; }
+
+        [ForeignKey("Category")]
+        public int CategoryId { get; set; }
+        public virtual Category Category { get; set; }
+
+        // Parental data for hierarchical categories
+        public int? ParentCategoryId { get; set; }
+        public virtual Category ParentCategory { get; set; }
+    }
 }

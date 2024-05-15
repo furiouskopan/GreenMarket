@@ -84,6 +84,18 @@ namespace GreenMarketBackend.Data
             // Configure indexes
             modelBuilder.Entity<Product>().HasIndex(p => p.Name);
 
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Product)
+                .WithMany(p => p.Reviews)
+                .HasForeignKey(r => r.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Category>().HasData(
                 new Category { CategoryId = 1, Name = "Fruits", Description = "All kinds of fruits" },
                 new Category { CategoryId = 2, Name = "Vegetables", Description = "Fresh vegetables" }

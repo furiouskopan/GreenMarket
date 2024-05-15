@@ -49,5 +49,8 @@ namespace GreenMarketBackend.Models
         // Parental data for hierarchical categories
         public int? ParentCategoryId { get; set; }
         public virtual Category ParentCategory { get; set; }
+        public virtual ICollection<Review> Reviews { get; set; }
+        public double AverageRating { get; set; }
+        public int ReviewCount { get; set; }
     }
 }

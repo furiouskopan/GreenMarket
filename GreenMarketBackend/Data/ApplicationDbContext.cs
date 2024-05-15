@@ -22,6 +22,11 @@ namespace GreenMarketBackend.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<ApplicationUser>(b =>
+            {
+                b.ToTable("AspNetUsers"); // Renaming the ASP.NET Identity table name to 'AspNetUsers'
+            });
+
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.User)
                 .WithMany(u => u.Orders)
@@ -68,7 +73,8 @@ namespace GreenMarketBackend.Data
             modelBuilder.Entity<Category>()
                 .HasMany(c => c.ChildCategories)
                 .WithOne()
-                .HasForeignKey(c => c.ParentCategoryId);
+                .HasForeignKey(c => c.ParentCategoryId)
+                .IsRequired(false);
 
             modelBuilder.Entity<Category>()
                 .HasMany(c => c.Products)
@@ -77,6 +83,11 @@ namespace GreenMarketBackend.Data
 
             // Configure indexes
             modelBuilder.Entity<Product>().HasIndex(p => p.Name);
+
+            modelBuilder.Entity<Category>().HasData(
+                new Category { CategoryId = 1, Name = "Fruits", Description = "All kinds of fruits" },
+                new Category { CategoryId = 2, Name = "Vegetables", Description = "Fresh vegetables" }
+);
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

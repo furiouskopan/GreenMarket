@@ -18,11 +18,8 @@ namespace GreenMarketBackend.Models
         [StringLength(100)]
         public string Address { get; set; }
 
-        [StringLength(100)]
-        public string Email { get; set; }
-
         [StringLength(20)]
-        public int PhoneNumber { get; set; }
+        public string PhoneNumber { get; set; }
 
         [Required]
         public DateTime RegistrationDate { get; set; }

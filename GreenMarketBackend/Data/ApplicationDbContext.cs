@@ -1,5 +1,7 @@
 ﻿using GreenMarketBackend.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 
 namespace GreenMarketBackend.Data
 {
@@ -72,9 +74,9 @@ namespace GreenMarketBackend.Data
             // Configure the navigation properties for hierarchical categories
             modelBuilder.Entity<Category>()
                 .HasMany(c => c.ChildCategories)
-                .WithOne()
+                .WithOne(c => c.ParentCategory)
                 .HasForeignKey(c => c.ParentCategoryId)
-                .IsRequired(false);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Category>()
                 .HasMany(c => c.Products)
@@ -96,16 +98,76 @@ namespace GreenMarketBackend.Data
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Seeding categories
             modelBuilder.Entity<Category>().HasData(
-                new Category { CategoryId = 1, Name = "Fruits", Description = "All kinds of fruits" },
-                new Category { CategoryId = 2, Name = "Vegetables", Description = "Fresh vegetables" }
-);
+                new Category { CategoryId = 1, Name = "Fruits", Description = "All kinds of fruits", ParentCategoryId = null },
+                new Category { CategoryId = 2, Name = "Vegetables", Description = "Fresh vegetables", ParentCategoryId = null },
+                new Category { CategoryId = 3, Name = "Citrus Fruits", Description = "All kinds of citrus fruits", ParentCategoryId = 1 },
+                new Category { CategoryId = 4, Name = "Root Vegetables", Description = "Various root vegetables", ParentCategoryId = 2 }
+            );
+
+
+            // Seed a dummy user
+            var userId = "a1234567-89ab-cdef-0123-456789abcdef"; // Ensure this is unique and consistent
+            modelBuilder.Entity<ApplicationUser>().HasData(new ApplicationUser
+            {
+                Id = userId,
+                UserName = "testuser",
+                NormalizedUserName = "TESTUSER",
+                Email = "testuser@example.com",
+                NormalizedEmail = "TESTUSER@EXAMPLE.COM",
+                EmailConfirmed = true,
+                PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(null, "Test123!"), // Use a password hasher
+                SecurityStamp = Guid.NewGuid().ToString(),  // Generating a new security stamp
+                FirstName = "Test",
+                LastName = "User",
+                Address = "Epimenonda",
+                RegistrationDate = DateTime.Now,
+                IsSeller = true
+            });
+
+            modelBuilder.Entity<Product>().HasData(
+                new Product
+                {
+                    ProductId = 1,
+                    Name = "Organic Apples",
+                    Description = "Fresh apples from local orchards.",
+                    Price = 1.99m,
+                    StockQuantity = 100,
+                    ImageURL = "path_to_apples.jpg",
+                    Pesticides = "None",
+                    Origin = "Local",
+                    CreatedDate = DateTime.Now,
+                    HarvestDate = DateTime.Now.AddDays(-30),
+                    CreatedByUserId = userId,  // Ensure this ID exists in your User table
+                    CategoryId = 1,  // Ensure this ID exists in your Category table
+                    AverageRating = 4.5,
+                    ReviewCount = 10
+                },
+                new Product
+                {
+                    ProductId = 2,
+                    Name = "Organic Carrots",
+                    Description = "Crunchy carrots perfect for a healthy snack.",
+                    Price = 0.99m,
+                    StockQuantity = 150,
+                    ImageURL = "path_to_carrots.jpg",
+                    Pesticides = "None",
+                    Origin = "Local",
+                    CreatedDate = DateTime.Now,
+                    HarvestDate = DateTime.Now.AddDays(-10),
+                    CreatedByUserId = userId,  // Same note as above
+                    CategoryId = 2,  // Same note as above
+                    AverageRating = 4.8,
+                    ReviewCount = 8
+                }
+            );
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseSqlServer("Server: DESKTOP-S5ULU19\\SQLEXPRESS; Database=GreenMarket; Trusted_Connection:True");
+                optionsBuilder.UseSqlServer("Server=DESKTOP-S5ULU19\\SQLEXPRESS; Database=GreenMarket; Trusted_Connection=True; TrustServerCertificate=True");
             }
         }
     }

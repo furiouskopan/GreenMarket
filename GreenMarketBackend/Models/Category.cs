@@ -16,8 +16,7 @@ namespace GreenMarketBackend.Models
 
         public string Description { get; set; }
 
-        // ParentCategoryId for hierarchical categories
-        public int? ParentCategoryId { get; set; }
+        public int? ParentCategoryId { get; set; }  // Ensure it's nullable
 
         // Navigation property for the parent category
         public virtual Category ParentCategory { get; set; }

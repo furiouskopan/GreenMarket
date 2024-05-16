@@ -11,10 +11,16 @@ namespace GreenMarketBackend.Models.ViewModels
         [Required]
         [StringLength(50)]
         public string LastName { get; set; }
+        [Required]
+        [StringLength(15)]
+        public string Username { get; set; }
 
         [Required]
         [EmailAddress]
         public string Email { get; set; }
+
+        [Required]
+        public string Address { get; set; }
 
         [Required]
         [Phone]

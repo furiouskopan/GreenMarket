@@ -7,7 +7,7 @@
 
 <p>Please enter your details to complete your registration.</p>
 
-@using (Html.BeginForm("ExternalLoginConfirmation", "Accounts", new { ReturnUrl = ViewData["ReturnUrl"] }))
+@using (Html.BeginForm("ExternalLoginConfirmation", "Login", new { ReturnUrl = ViewData["ReturnUrl"] }))
 {
     @Html.AntiForgeryToken()
 
@@ -29,6 +29,11 @@
             @Html.LabelFor(m => m.LastName)
             @Html.TextBoxFor(m => m.LastName)
             @Html.ValidationMessageFor(m => m.LastName)
+        </div>
+        <div>
+            @Html.LabelFor(m => m.Address)
+            @Html.TextBoxFor(m => m.Address)
+            @Html.ValidationMessageFor(m => m.Address)
         </div>
 
         <button type="submit">Register</button>

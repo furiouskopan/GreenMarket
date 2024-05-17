@@ -45,17 +45,15 @@ namespace GreenMarketBackend.Controllers
             return View(model);
         }
 
-        [HttpGet] // This action is for handling the GET request to start the Google login process
+        [HttpGet]
         public IActionResult ExternalLogin(string provider, string returnUrl = null)
         {
-            // Request a redirect to the external login provider.
             var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Login", new { ReturnUrl = returnUrl });
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
             return Challenge(properties, provider);
         }
 
-        [HttpPost] // This action is for handling the POST request after returning from the Google login
-        [ValidateAntiForgeryToken]
+        [HttpGet]
         public async Task<IActionResult> ExternalLoginCallback(string returnUrl = null, string remoteError = null)
         {
             returnUrl ??= Url.Content("~/");
@@ -92,6 +90,7 @@ namespace GreenMarketBackend.Controllers
                 var email = info.Principal.FindFirstValue(ClaimTypes.Email);
                 var model = new ExternalLoginViewModel { Email = email };
 
+                // Pass the model to the view to complete the registration
                 return View("ExternalLogin", model);
             }
         }
@@ -111,7 +110,14 @@ namespace GreenMarketBackend.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
+                var user = new ApplicationUser
+                {
+                    UserName = model.Email, 
+                    Email = model.Email,
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    Address = model.Address  
+                };
                 var result = await _userManager.CreateAsync(user);
                 if (result.Succeeded)
                 {

@@ -11,30 +11,35 @@
     <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
     <script src="~/lib/bootstrap/js/bootstrap.min.js"></script>
 </head>
-    <div class="container d-flex flex-column justify-content-center align-items-center vh-100">
-        <div class="card shadow-sm w-100" style="max-width: 400px;">
-            <div class="card-body">
-                <h3 class="card-title text-center mb-4">Login to Green Market</h3>
-                <form method="post" action="/account/login">
-                    <div class="mb-3">
-                        <label for="inputEmail" class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="inputEmail" name="Email" value="@Model.Email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="inputPassword" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="inputPassword" name="Password" value="@Model.Password" autocomplete="current-password" required>
-                    </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="rememberMe" name="RememberMe">
-                        <label class="form-check-label" for="rememberMe">Remember Me</label>
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">Login</button>
-                    <div class="text-center mt-3">
-                        Don't have an account? <a class="link-primary" asp-controller="Accounts" asp-action="Register">Register</a>
-                    </div>
-                </form>
-            </div>
+<div class="container d-flex flex-column justify-content-center align-items-center vh-100">
+    <div class="card shadow-sm w-100" style="max-width: 400px;">
+        <div class="card-body">
+            <h3 class="card-title text-center mb-4">Login to Green Market</h3>
+            <form method="post" asp-action="Index">
+                <div class="mb-3">
+                    <label for="inputEmail" class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="inputEmail" name="Email" value="@Model.Email" required>
+                </div>
+                <div class="mb-3">
+                    <label for="inputPassword" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="inputPassword" name="Password" autocomplete="current-password" required>
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="rememberMe" name="RememberMe">
+                    <label class="form-check-label" for="rememberMe">Remember Me</label>
+                </div>
+
+                <button type="submit" class="btn btn-success w-100">Login</button>
+                <div class="text-center mt-3">
+                    Don't have an account? <a class="link-primary" asp-controller="Accounts" asp-action="Register">Register</a>
+                </div>
+            </form>
+
+            <hr />
+            <a asp-action="ExternalLogin" asp-route-provider="Google" class="google-btn">
+                <img src="https://developers.google.com/identity/images/g-logo.png" class="google-icon" alt="Google logo" />
+                <span>Sign in with Google</span>
+            </a>
         </div>
     </div>
-
-
+</div>

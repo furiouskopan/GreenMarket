@@ -6,16 +6,22 @@ using GreenMarketBackend.Models.ViewModels;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Hosting;
 
 namespace GreenMarketBackend.Controllers
 {
     public class ProductsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public ProductsController(ApplicationDbContext context)
+        public ProductsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
+            _userManager = userManager;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         // GET: Products
@@ -75,18 +81,51 @@ namespace GreenMarketBackend.Controllers
         // POST: Products/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ProductId,Name,Description,Price,StockQuantity,ImageURL,CreatedDate,HarvestDate,CategoryId,CreatedByUserId")] Product product)
+        public async Task<IActionResult> Create(ProductViewModel model)
         {
             if (ModelState.IsValid)
             {
+                string uniqueFileName = UploadedFile(model);
+
+                var user = await _userManager.GetUserAsync(User);
+                var product = new Product
+                {
+                    Name = model.Name,
+                    Description = model.Description,
+                    Price = model.Price,
+                    StockQuantity = model.StockQuantity,
+                    ImageURL = uniqueFileName,
+                    Pesticides = model.Pesticides,
+                    Origin = model.Origin,
+                    CreatedDate = DateTime.UtcNow,
+                    HarvestDate = model.HarvestDate,
+                    CreatedByUserId = user.Id,
+                    CategoryId = model.CategoryId,
+                };
+
                 _context.Add(product);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index)); // Redirect to the index action or dashboard
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "Name", product.CategoryId);
-            return View(product);
+            return View(model);
         }
+        private string UploadedFile(ProductViewModel model)
+        {
+            string uniqueFileName = null;
 
+            if (model.ImageFile != null)
+            {
+                string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
+                uniqueFileName = Guid.NewGuid().ToString() + "_" + model.ImageFile.FileName;
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    model.ImageFile.CopyTo(fileStream);
+                }
+            }
+
+            return uniqueFileName;
+        }
         // GET: Products/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {

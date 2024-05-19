@@ -1,0 +1,54 @@
+﻿    @model GreenMarketBackend.Models.ViewModels.AccountViewModel
+@{
+    ViewData["Title"] = "Account";
+    Layout = "_NavBar"; 
+}
+
+<div class="container">
+    <h2 class="mt-4">Account Management</h2>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <h4>Personal Information</h4>
+            <form asp-action="UpdateAccountInfo">
+                <div class="form-group mb-2">
+                    <label asp-for="Email" class="control-label"></label>
+                    <input asp-for="Email" class="form-control" readonly />
+                </div>
+                <div class="form-group mb-2">
+                    <label asp-for="FirstName" class="control-label"></label>
+                    <input asp-for="FirstName" class="form-control" />
+                </div>
+                <div class="form-group mb-2">
+                    <label asp-for="LastName" class="control-label"></label>
+                    <input asp-for="LastName" class="form-control" />
+                </div>
+                <div class="form-group mb-2">
+                    <label asp-for="Address" class="control-label"></label>
+                    <input asp-for="Address" class="form-control" />
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="PhoneNumber" class="control-label"></label>
+                    <input asp-for="PhoneNumber" class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>
+        </div>
+
+        <div class="col-md-6">
+            <h4>Seller Registration</h4>
+            <form asp-action="RegisterAsSeller">
+                <div class="form-group mb-2">
+                    <label for="sellerCheck">Register as a seller:</label>
+                    <input type="checkbox" id="sellerCheck" name="RegisterAsSeller" class="form-check-input" />
+                </div>
+                <button type="submit" class="btn btn-success">Update Role</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

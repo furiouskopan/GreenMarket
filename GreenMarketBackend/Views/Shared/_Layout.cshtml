@@ -19,7 +19,16 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
-                        <li class="nav-item"><a class="nav-link" asp-controller="Accounts" asp-action="Login">Login</a></li>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Account" asp-action="Index">Account</a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Login" asp-action="Index">Login</a></li>
+                    }
                         <li class="nav-item"><a class="nav-link" asp-controller="Products" asp-action="Products">Products</a></li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="About">About Us</a></li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Contact">Contact</a></li>

@@ -1,0 +1,56 @@
+﻿@model GreenMarketBackend.Models.ViewModels.ProductDetailsViewModel
+
+@{
+    ViewData["Title"] = "Product Details";
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <img src="@Url.Content("~/images/" + Model.Product.ImageURL)" class="img-fluid" alt="@Model.Product.Name" />
+        </div>
+        <div class="col-md-6">
+            <h1>@Model.Product.Name</h1>
+            <p>@Model.Product.Description</p>
+            <p><strong>Price:</strong> @Model.Product.Price.ToString("C")</p>
+            <p><strong>Stock Quantity:</strong> @Model.Product.StockQuantity</p>
+            <p><strong>Pesticides Used:</strong> @Model.Product.Pesticides</p>
+            <p><strong>Origin:</strong> @Model.Product.Origin</p>
+            <p><strong>Harvest Date:</strong> @Model.Product.HarvestDate.ToShortDateString()</p>
+            <p><strong>Average Rating:</strong> @Model.Product.AverageRating</p>
+            <p><strong>Reviews:</strong> @Model.Product.ReviewCount</p>
+            <p><strong>Uploaded by:</strong> <a asp-controller="Account" asp-action="Details" asp-route-id="@Model.Uploader.Id">@Model.Uploader.UserName</a></p>
+        </div>
+    </div>
+
+    <hr />
+
+    <h2>Reviews</h2>
+
+    @foreach (var review in Model.Reviews)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">@review.User.UserName</h5>
+                <p class="card-text">@review.Comment</p>
+                <p class="card-text"><small class="text-muted">Rating: @review.Rating</small></p>
+            </div>
+        </div>
+    }
+
+    <h3>Add a Review</h3>
+    <form asp-action="AddReview" method="post">
+        <input type="hidden" asp-for="NewReview.ProductId" value="@Model.Product.ProductId" />
+        <div class="form-group">
+            <label asp-for="NewReview.Comment"></label>
+            <textarea asp-for="NewReview.Comment" class="form-control"></textarea>
+            <span asp-validation-for="NewReview.Comment" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="NewReview.Rating"></label>
+            <input asp-for="NewReview.Rating" class="form-control" />
+            <span asp-validation-for="NewReview.Rating" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Review</button>
+    </form>
+</div>

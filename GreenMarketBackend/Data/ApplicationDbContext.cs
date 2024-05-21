@@ -20,6 +20,8 @@ namespace GreenMarketBackend.Data
         public DbSet<Cart> Carts { get; set; }
         public DbSet<Report> Reports { get; set; }
         public DbSet<ApplicationUser> Users { get; set; }
+        public DbSet<Review> Reviews { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -91,7 +93,7 @@ namespace GreenMarketBackend.Data
                 .HasOne(r => r.Product)
                 .WithMany(p => p.Reviews)
                 .HasForeignKey(r => r.ProductId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade);  
 
             modelBuilder.Entity<Review>()
                 .HasOne(r => r.User)

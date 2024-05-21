@@ -92,11 +92,15 @@
             {
                 <div class="col-md-4 product-card" data-category="@product.Category.Name" data-price="@product.Price">
                     <div class="card">
-                        <img src="@product.ImageURL" class="card-img-top" alt="@product.Name">
+                        <a asp-action="Details" asp-route-id="@product.ProductId" class="text-decoration-none text-dark">
+                            <img src="@product.ImageURL" class="card-img-top" alt="@product.Name">
+                            <div class="card-body">
+                                <h5 class="card-title">@product.Name</h5>
+                                <p class="card-text">@product.Price.ToString("C") - @product.Description</p>
+                                <p class="card-text">Category: @product.Category.Name</p>
+                            </div>
+                        </a>
                         <div class="card-body">
-                            <h5 class="card-title">@product.Name</h5>
-                            <p class="card-text">@product.Price.ToString("C") - @product.Description</p>
-                            <p class="card-text">Category: @product.Category.Name</p>
                             <form asp-action="Delete" method="post" class="d-inline">
                                 <input type="hidden" name="id" value="@product.ProductId" />
                                 <button type="submit" class="btn btn-sm btn-danger">Delete</button>
@@ -106,6 +110,7 @@
                 </div>
             }
         </div>
+
     </div>
 
     <!-- Bootstrap JS -->

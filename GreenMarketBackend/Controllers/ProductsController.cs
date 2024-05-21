@@ -137,7 +137,7 @@ namespace GreenMarketBackend.Controllers
             var product = await _context.Products
                 .FirstOrDefaultAsync(m => m.ProductId == id);
             if (product == null)
-            {
+            {   
                 return NotFound();
             }
 
@@ -153,6 +153,71 @@ namespace GreenMarketBackend.Controllers
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Products/Details/5
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var product = await _context.Products
+                .Include(p => p.Reviews)
+                .ThenInclude(r => r.User)
+                .Include(p => p.CreatedByUser)
+                .FirstOrDefaultAsync(m => m.ProductId == id);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            var viewModel = new ProductDetailsViewModel
+            {
+                Product = product,
+                Reviews = product.Reviews.ToList(),
+                NewReview = new Review(),
+                Uploader = product.CreatedByUser
+            };
+
+            return View(viewModel);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddReview(ProductDetailsViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.GetUserAsync(User);
+
+                var review = new Review
+                {
+                    ProductId = model.NewReview.ProductId,
+                    UserId = user.Id,
+                    Comment = model.NewReview.Comment,
+                    Rating = model.NewReview.Rating,
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                _context.Reviews.Add(review);
+                await _context.SaveChangesAsync();
+
+                // Update the product's average rating and review count
+                var product = await _context.Products
+                    .Include(p => p.Reviews)
+                    .FirstOrDefaultAsync(p => p.ProductId == model.NewReview.ProductId);
+
+                product.AverageRating = product.Reviews.Average(r => r.Rating);
+                product.ReviewCount = product.Reviews.Count;
+
+                await _context.SaveChangesAsync();
+
+                return RedirectToAction(nameof(Details), new { id = model.NewReview.ProductId });
+            }
+
+            return View("Details", model);
         }
     }
 }

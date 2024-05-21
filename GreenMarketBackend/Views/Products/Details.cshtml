@@ -27,7 +27,7 @@
 
     <h2>Reviews</h2>
 
-    @foreach (var review in Model.Reviews)
+@*     @foreach (var review in Model.Reviews)
     {
         <div class="card mb-3">
             <div class="card-body">
@@ -36,7 +36,7 @@
                 <p class="card-text"><small class="text-muted">Rating: @review.Rating</small></p>
             </div>
         </div>
-    }
+    } *@
 
     <h3>Add a Review</h3>
     <form asp-action="AddReview" method="post">

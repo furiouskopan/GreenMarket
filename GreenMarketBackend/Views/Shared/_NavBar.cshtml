@@ -44,14 +44,13 @@
         </div>
     </nav>
 </header>
-<main role="main" class="pb-3 mt-5">
+<main role="main" class="pb-3 mt-5 container-fluid">
     @RenderBody()
-    <script src="~/lib/bootstrap/js/boostrap.min.js"></script>
 </main>
-
-<footer class="text-center py-2 text-white">
+<footer class="text-center py-2 text-white" id="footer">
     <p>&copy; 2024 Green Market. All Rights Reserved.</p>
 </footer>
+<script src="~/lib/bootstrap/js/boostrap.min.js"></script>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)

@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Create Product";
+    Layout = "~/Views/Shared/_NavBar.cshtml";
 }
 
 <div class="container mt-5">
@@ -53,14 +54,14 @@
         </div>
 
         <div class="form-group mb-3">
-            <label asp-for="HarvestDate" class="form-label"></label>
+            <label asp-for="HarvestDate" class="form-label">Harvest Date</label>
             <input asp-for="HarvestDate" type="date" class="form-control" />
             <span asp-validation-for="HarvestDate" class="text-danger"></span>
         </div>
 
         <div class="form-group mb-3">
-            <label asp-for="CategoryId" class="form-label"></label>
-            <select asp-for="CategoryId" asp-items="@(new SelectList(ViewBag.Categories, "CategoryId", "Name"))" class="form-control"></select>
+            <label asp-for="CategoryId" class="form-label">Category</label>
+            <select asp-for="CategoryId" asp-items="@(ViewBag.Categories)" class="form-control"></select>
             <span asp-validation-for="CategoryId" class="text-danger"></span>
         </div>
 

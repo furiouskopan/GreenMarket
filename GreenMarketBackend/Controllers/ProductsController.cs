@@ -74,7 +74,7 @@ namespace GreenMarketBackend.Controllers
         // GET: Products/Create
         public IActionResult Create()
         {
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "Name");
+            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name");
             return View();
         }
 
@@ -105,8 +105,10 @@ namespace GreenMarketBackend.Controllers
 
                 _context.Add(product);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index)); // Redirect to the index action or dashboard
+                return RedirectToAction(nameof(Index));
             }
+
+            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name"); // Reset ViewBag in case of validation errors
             return View(model);
         }
         private string UploadedFile(ProductViewModel model)

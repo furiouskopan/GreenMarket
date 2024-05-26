@@ -23,6 +23,7 @@
     <Folder Include="Migrations\" />
     <Folder Include="Views\Categories\" />
     <Folder Include="Views\Cart\" />
+    <Folder Include="wwwroot\images\" />
   </ItemGroup>
 
 </Project>

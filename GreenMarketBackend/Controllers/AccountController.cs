@@ -27,6 +27,7 @@ namespace GreenMarketBackend.Controllers
                 Email = user.Email,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
+                Username = user.UserName,
                 Address = user.Address,
                 PhoneNumber = user.PhoneNumber
             };

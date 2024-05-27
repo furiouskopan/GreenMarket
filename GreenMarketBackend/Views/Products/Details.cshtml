@@ -2,12 +2,20 @@
 
 @{
     ViewData["Title"] = "Product Details";
+    Layout = "_NavBar";
 }
 
 <div class="container mt-5">
     <div class="row">
         <div class="col-md-6">
-            <img src="@Url.Content("~/images/" + Model.Product.ImageURL)" class="img-fluid" alt="@Model.Product.Name" />
+            @if (!string.IsNullOrEmpty(Model.Product?.ImageURL))
+            {
+                <img src="@Url.Content("~/images/" + Model.Product.ImageURL)" class="img-fluid" alt="@Model.Product.Name" />
+            }
+            else
+            {
+                <p>No image available</p>
+            }
         </div>
         <div class="col-md-6">
             <h1>@Model.Product.Name</h1>
@@ -19,38 +27,45 @@
             <p><strong>Harvest Date:</strong> @Model.Product.HarvestDate.ToShortDateString()</p>
             <p><strong>Average Rating:</strong> @Model.Product.AverageRating</p>
             <p><strong>Reviews:</strong> @Model.Product.ReviewCount</p>
-            <p><strong>Uploaded by:</strong> <a asp-controller="Account" asp-action="Details" asp-route-id="@Model.Uploader.Id">@Model.Uploader.UserName</a></p>
+            <p>
+                <strong>Uploaded by:</strong>
+                <a asp-controller="Account" asp-action="Details" asp-route-id="@Model.Uploader.Id">@Model.Uploader.FirstName @Model.Uploader.LastName</a>
+            </p>
         </div>
     </div>
 
-    <hr />
-
-    <h2>Reviews</h2>
-
-@*     @foreach (var review in Model.Reviews)
-    {
-        <div class="card mb-3">
-            <div class="card-body">
-                <h5 class="card-title">@review.User.UserName</h5>
-                <p class="card-text">@review.Comment</p>
-                <p class="card-text"><small class="text-muted">Rating: @review.Rating</small></p>
+    <div class="mt-5">
+        <h3>Reviews</h3>
+        <form asp-action="AddReview" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <input type="hidden" name="ProductId" value="@Model.Product.ProductId" />
+            <div class="form-group">
+                <label for="Comment">Comment</label>
+                <textarea id="Comment" name="Comment" class="form-control"></textarea>
+                <span asp-validation-for="Comment" class="text-danger"></span>
             </div>
-        </div>
-    } *@
+            <div class="form-group">
+                <label for="Rating">Rating</label>
+                <input type="number" id="Rating" name="Rating" class="form-control" min="1" max="5" />
+                <span asp-validation-for="Rating" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Submit Review</button>
+        </form>
 
-    <h3>Add a Review</h3>
-    <form asp-action="AddReview" method="post">
-        <input type="hidden" asp-for="NewReview.ProductId" value="@Model.Product.ProductId" />
-        <div class="form-group">
-            <label asp-for="NewReview.Comment"></label>
-            <textarea asp-for="NewReview.Comment" class="form-control"></textarea>
-            <span asp-validation-for="NewReview.Comment" class="text-danger"></span>
-        </div>
-        <div class="form-group">
-            <label asp-for="NewReview.Rating"></label>
-            <input asp-for="NewReview.Rating" class="form-control" />
-            <span asp-validation-for="NewReview.Rating" class="text-danger"></span>
-        </div>
-        <button type="submit" class="btn btn-primary">Submit Review</button>
-    </form>
+
+        <ul class="list-group mt-3">
+            @foreach (var review in Model.Reviews)
+            {
+                <li class="list-group-item">
+                    <p>@review.Comment</p>
+                    <p>Rating: @review.Rating</p>
+                    <p>By: @review.User.UserName on @review.CreatedDate.ToString("d")</p>
+                </li>
+            }
+        </ul>
+    </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

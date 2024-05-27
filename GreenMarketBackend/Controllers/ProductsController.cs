@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Hosting;
+using System;
+using System.IO;
 
 namespace GreenMarketBackend.Controllers
 {
@@ -24,36 +26,28 @@ namespace GreenMarketBackend.Controllers
             _webHostEnvironment = webHostEnvironment;
         }
 
-        // GET: Products
+        // Displays a list of products with optional filtering by category and sorting
         public async Task<IActionResult> Index(int? parentCategoryId, int? childCategoryId, string sortOrder)
         {
             var parentCategories = await _context.Categories.Where(c => c.ParentCategoryId == null).ToListAsync();
             var childCategories = Enumerable.Empty<Category>();
-
-            // Start with a queryable to allow for more efficient querying.
             IQueryable<Product> productsQuery = _context.Products.Include(p => p.Category);
 
-            // Apply child category filter if specified
             if (childCategoryId.HasValue)
             {
                 productsQuery = productsQuery.Where(p => p.CategoryId == childCategoryId);
-                childCategories = await _context.Categories.Where(c => c.ParentCategoryId == parentCategoryId).ToListAsync(); // Fetch child categories based on parent category if available
+                childCategories = await _context.Categories.Where(c => c.ParentCategoryId == parentCategoryId).ToListAsync();
             }
             else if (parentCategoryId.HasValue)
             {
-                // Apply parent category filter if child category is not specified
                 childCategories = await _context.Categories.Where(c => c.ParentCategoryId == parentCategoryId).ToListAsync();
                 productsQuery = productsQuery.Where(p => p.Category.ParentCategoryId == parentCategoryId);
             }
 
             switch (sortOrder)
             {
-                case "asc":
-                    productsQuery = productsQuery.OrderBy(p => p.Price);
-                    break;
-                case "desc":
-                    productsQuery = productsQuery.OrderByDescending(p => p.Price);
-                    break;
+                case "asc": productsQuery = productsQuery.OrderBy(p => p.Price); break;
+                case "desc": productsQuery = productsQuery.OrderByDescending(p => p.Price); break;
             }
 
             var products = await productsQuery.ToListAsync();
@@ -70,15 +64,14 @@ namespace GreenMarketBackend.Controllers
             return View(viewModel);
         }
 
-
-        // GET: Products/Create
+        // Returns the view for creating a new product
         public IActionResult Create()
         {
             ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name");
             return View();
         }
 
-        // POST: Products/Create
+        // Handles the POST request to create a new product
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductViewModel model)
@@ -100,7 +93,7 @@ namespace GreenMarketBackend.Controllers
                     CreatedDate = DateTime.UtcNow,
                     HarvestDate = model.HarvestDate,
                     CreatedByUserId = user.Id,
-                    CategoryId = model.CategoryId,
+                    CategoryId = model.CategoryId
                 };
 
                 _context.Add(product);
@@ -108,9 +101,11 @@ namespace GreenMarketBackend.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name"); // Reset ViewBag in case of validation errors
+            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name");
             return View(model);
         }
+
+        // Handles file upload for product images
         private string UploadedFile(ProductViewModel model)
         {
             string uniqueFileName = null;
@@ -128,7 +123,8 @@ namespace GreenMarketBackend.Controllers
 
             return uniqueFileName;
         }
-        // GET: Products/Delete/5
+
+        // Displays the delete confirmation page
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -136,17 +132,16 @@ namespace GreenMarketBackend.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products
-                .FirstOrDefaultAsync(m => m.ProductId == id);
+            var product = await _context.Products.FirstOrDefaultAsync(m => m.ProductId == id);
             if (product == null)
-            {   
+            {
                 return NotFound();
             }
 
             return View(product);
         }
 
-        // POST: Products/Delete/5
+        // Handles the POST request to delete a product
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -157,6 +152,7 @@ namespace GreenMarketBackend.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // Displays the details of a specific product, including reviews
         // GET: Products/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -180,46 +176,68 @@ namespace GreenMarketBackend.Controllers
             {
                 Product = product,
                 Reviews = product.Reviews.ToList(),
-                NewReview = new Review(),
+                NewReview = new ReviewSubmissionViewModel { ProductId = product.ProductId },
                 Uploader = product.CreatedByUser
             };
 
             return View(viewModel);
         }
+
+        // Handles the POST request to add a review to a product
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddReview(ProductDetailsViewModel model)
+        public async Task<IActionResult> AddReview(AddReviewViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var user = await _userManager.GetUserAsync(User);
-
-                var review = new Review
-                {
-                    ProductId = model.NewReview.ProductId,
-                    UserId = user.Id,
-                    Comment = model.NewReview.Comment,
-                    Rating = model.NewReview.Rating,
-                    CreatedDate = DateTime.UtcNow
-                };
-
-                _context.Reviews.Add(review);
-                await _context.SaveChangesAsync();
-
-                // Update the product's average rating and review count
+                // Reload the product and reviews for the view if validation fails
                 var product = await _context.Products
                     .Include(p => p.Reviews)
-                    .FirstOrDefaultAsync(p => p.ProductId == model.NewReview.ProductId);
+                    .ThenInclude(r => r.User)
+                    .Include(p => p.CreatedByUser)
+                    .FirstOrDefaultAsync(m => m.ProductId == model.ProductId);
 
-                product.AverageRating = product.Reviews.Average(r => r.Rating);
-                product.ReviewCount = product.Reviews.Count;
+                if (product == null)
+                {
+                    return NotFound();
+                }
 
-                await _context.SaveChangesAsync();
+                var viewModel = new ProductDetailsViewModel
+                {
+                    Product = product,
+                    Reviews = product.Reviews.ToList(),
+                    NewReview = new ReviewSubmissionViewModel { ProductId = product.ProductId },
+                    Uploader = product.CreatedByUser
+                };
 
-                return RedirectToAction(nameof(Details), new { id = model.NewReview.ProductId });
+                return View("Details", viewModel);
             }
 
-            return View("Details", model);
+            var user = await _userManager.GetUserAsync(User);
+
+            var review = new Review
+            {
+                ProductId = model.ProductId,
+                UserId = user.Id,
+                Comment = model.Comment,
+                Rating = model.Rating,
+                CreatedDate = DateTime.UtcNow
+            };
+
+            _context.Reviews.Add(review);
+            await _context.SaveChangesAsync();
+
+            // Update the product's average rating and review count
+            var updatedProduct = await _context.Products
+                .Include(p => p.Reviews)
+                .FirstOrDefaultAsync(p => p.ProductId == model.ProductId);
+
+            updatedProduct.AverageRating = updatedProduct.Reviews.Average(r => r.Rating);
+            updatedProduct.ReviewCount = updatedProduct.Reviews.Count;
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Details), new { id = model.ProductId });
         }
     }
 }

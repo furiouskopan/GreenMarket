@@ -1,4 +1,4 @@
-﻿namespace GreenMarketBackend.Models.ViewModels
+﻿namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
 {
     public class ProductFilterViewModel
     {

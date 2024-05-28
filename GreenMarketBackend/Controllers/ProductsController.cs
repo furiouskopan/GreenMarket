@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using GreenMarketBackend.Data;
 using GreenMarketBackend.Models;
-using GreenMarketBackend.Models.ViewModels;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -10,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Hosting;
 using System;
 using System.IO;
+using GreenMarketBackend.Models.ViewModels.ProductViewModels;
 
 namespace GreenMarketBackend.Controllers
 {
@@ -183,6 +183,23 @@ namespace GreenMarketBackend.Controllers
             return View(viewModel);
         }
 
+        // GET: Products/MyProducts
+        public async Task<IActionResult> MyProducts()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var products = await _context.Products
+                .Where(p => p.CreatedByUserId == user.Id)
+                .ToListAsync();
+
+            return View(products);
+        }
+
         // Handles the POST request to add a review to a product
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -238,6 +255,61 @@ namespace GreenMarketBackend.Controllers
             await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Details), new { id = model.ProductId });
+        }
+        // GET: Products/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", product.CategoryId);
+            return View(product);
+        }
+
+        // POST: Products/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, Product product)
+        {
+            if (id != product.ProductId)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(product);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ProductExists(product.ProductId))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(MyProducts));
+            }
+            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", product.CategoryId);
+            return View(product);
+        }
+        private bool ProductExists(int id)
+        {
+            return _context.Products.Any(e => e.ProductId == id);
         }
     }
 }

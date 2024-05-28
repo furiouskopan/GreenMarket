@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using System.Threading.Tasks;
 using GreenMarketBackend.Models;
 using System.Security.Claims;
-using GreenMarketBackend.Models.ViewModels;
+using GreenMarketBackend.Models.ViewModels.AccountViewModels;
 
 namespace GreenMarketBackend.Controllers
 {

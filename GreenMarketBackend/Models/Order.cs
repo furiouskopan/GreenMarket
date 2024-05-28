@@ -24,7 +24,6 @@ namespace GreenMarketBackend.Models
 
         public string ShippingAddress { get; set; }
 
-        // Other properties as needed
 
         // Navigation property for order items
         public virtual ICollection<OrderItem> OrderItems { get; set; }

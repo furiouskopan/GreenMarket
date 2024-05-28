@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using GreenMarketBackend.Models; 
+using GreenMarketBackend.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
-using GreenMarketBackend.Models.ViewModels;
+using GreenMarketBackend.Models.ViewModels.AccountViewModels;
 
 
 namespace GreenMarketBackend.Controllers

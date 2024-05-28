@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.ComponentModel.DataAnnotations;
-namespace GreenMarketBackend.Models.ViewModels
+namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
 {
     public class ProductViewModel
     {

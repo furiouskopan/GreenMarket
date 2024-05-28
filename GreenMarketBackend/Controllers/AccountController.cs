@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using GreenMarketBackend.Models.ViewModels;
+using GreenMarketBackend.Models.ViewModels.AccountViewModels;
 
 namespace GreenMarketBackend.Controllers
 {

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace GreenMarketBackend.Models.ViewModels
+namespace GreenMarketBackend.Models.ViewModels.AccountViewModels
 {
     public class LoginViewModel
     {

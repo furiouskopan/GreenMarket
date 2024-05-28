@@ -257,6 +257,7 @@ namespace GreenMarketBackend.Controllers
             return RedirectToAction(nameof(Details), new { id = model.ProductId });
         }
         // GET: Products/Edit/5
+        // GET: Products/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -270,16 +271,31 @@ namespace GreenMarketBackend.Controllers
                 return NotFound();
             }
 
+            var viewModel = new ProductEditViewModel
+            {
+                ProductId = product.ProductId,
+                Name = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                StockQuantity = product.StockQuantity,
+                ImageURL = product.ImageURL,
+                Pesticides = product.Pesticides,
+                Origin = product.Origin,
+                HarvestDate = product.HarvestDate,
+                CategoryId = product.CategoryId,
+                CreatedDate = product.CreatedDate,
+            };
+
             ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", product.CategoryId);
-            return View(product);
+            return View(viewModel);
         }
 
         // POST: Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Product product)
+        public async Task<IActionResult> Edit(int id, ProductEditViewModel model)
         {
-            if (id != product.ProductId)
+            if (id != model.ProductId)
             {
                 return NotFound();
             }
@@ -288,12 +304,28 @@ namespace GreenMarketBackend.Controllers
             {
                 try
                 {
+                    var product = await _context.Products.FindAsync(id);
+                    if (product == null)
+                    {
+                        return NotFound();
+                    }
+
+                    product.Name = model.Name;
+                    product.Description = model.Description;
+                    product.Price = model.Price;
+                    product.StockQuantity = model.StockQuantity;
+                    product.ImageURL = model.ImageURL;
+                    product.Pesticides = model.Pesticides;
+                    product.Origin = model.Origin;
+                    product.HarvestDate = model.HarvestDate;
+                    product.CategoryId = model.CategoryId;
+
                     _context.Update(product);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProductExists(product.ProductId))
+                    if (!ProductExists(model.ProductId))
                     {
                         return NotFound();
                     }
@@ -304,9 +336,10 @@ namespace GreenMarketBackend.Controllers
                 }
                 return RedirectToAction(nameof(MyProducts));
             }
-            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", product.CategoryId);
-            return View(product);
+            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", model.CategoryId);
+            return View(model);
         }
+
         private bool ProductExists(int id)
         {
             return _context.Products.Any(e => e.ProductId == id);

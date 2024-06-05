@@ -35,6 +35,18 @@
     </div>
 
     <div class="mt-5">
+        <h3>Add to Cart</h3>
+        <form asp-controller="Cart" asp-action="AddToCart" method="post">
+            <input type="hidden" name="productId" value="@Model.Product.ProductId" />
+            <div class="form-group">
+                <label for="quantity">Quantity:</label>
+                <input type="number" id="quantity" name="quantity" class="form-control" value="1" min="1" />
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Add to Cart</button>
+        </form>
+    </div>  
+
+    <div class="mt-5">
         <h3>Reviews</h3>
         <form asp-action="AddReview" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>

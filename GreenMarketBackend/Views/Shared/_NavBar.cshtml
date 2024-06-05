@@ -6,6 +6,7 @@
     <title>@ViewData["Title"] - GreenMarket</title>
     <link rel="stylesheet" href="~/css/styles.css" asp-append-version="true" />
     <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/41559c54b2.js" crossorigin="anonymous"></script>
 </head>
 <header>
     <nav class="navbar navbarAcc navbar-expand-lg navbar-dark fixed-top">
@@ -39,6 +40,11 @@
                             </form>
                         </li>
                         }
+                    <li class="nav-item">
+                        <a class="nav-link" href="@Url.Action("Index", "Cart")"> 
+                            <i class="fa-solid fa-cart-shopping"></i>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

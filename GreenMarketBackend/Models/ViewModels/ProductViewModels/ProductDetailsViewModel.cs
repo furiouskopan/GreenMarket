@@ -5,6 +5,7 @@ namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
     public class ProductDetailsViewModel
     {
         public Product Product { get; set; }
+        public int ProductId { get; set; }
         public List<Review> Reviews { get; set; }
         public ReviewSubmissionViewModel NewReview { get; set; }
         public string Comment { get; set; }

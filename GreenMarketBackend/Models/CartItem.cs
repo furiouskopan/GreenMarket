@@ -23,6 +23,8 @@ namespace GreenMarketBackend.Models
         [Required]
         public int Quantity { get; set; }
 
-        // Other properties as needed
+        public DateTime DateAdded { get; set; }
+
+        public decimal PriceAtTimeOfPurchase { get; set; }
     }
 }

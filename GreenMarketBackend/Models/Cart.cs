@@ -14,6 +14,10 @@ namespace GreenMarketBackend.Models
         [ForeignKey("UserId")]
         public virtual ApplicationUser User { get; set; }
 
+        public DateTime DateCreated { get; set; }
+
+        public decimal TotalAmount { get; set; }
+
         // Navigation property for cart items
         public virtual ICollection<CartItem> CartItems { get; set; }
     }

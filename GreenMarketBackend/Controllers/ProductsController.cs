@@ -174,6 +174,7 @@ namespace GreenMarketBackend.Controllers
 
             var viewModel = new ProductDetailsViewModel
             {
+                ProductId = product.ProductId,  
                 Product = product,
                 Reviews = product.Reviews.ToList(),
                 NewReview = new ReviewSubmissionViewModel { ProductId = product.ProductId },
@@ -182,6 +183,7 @@ namespace GreenMarketBackend.Controllers
 
             return View(viewModel);
         }
+
 
         // GET: Products/MyProducts
         public async Task<IActionResult> MyProducts()
@@ -256,7 +258,6 @@ namespace GreenMarketBackend.Controllers
 
             return RedirectToAction(nameof(Details), new { id = model.ProductId });
         }
-        // GET: Products/Edit/5
         // GET: Products/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {

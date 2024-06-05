@@ -2,12 +2,7 @@
 {
     public class CartViewModel
     {
-        public List<CartItem> CartItems { get; set; }
+        public List<CartItemViewModel> CartItems { get; set; } = new List<CartItemViewModel>();
         public decimal TotalAmount { get; set; }
-
-        public CartViewModel()
-        {
-            CartItems = new List<CartItem>();
-        }
     }
 }

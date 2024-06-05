@@ -31,13 +31,20 @@ namespace GreenMarketBackend.Controllers
                 return View(new CartViewModel());
             }
 
-            var viewModel = new CartViewModel
+            var cartViewModel = new CartViewModel
             {
-                CartItems = cart.CartItems.ToList(),
-                TotalAmount = cart.CartItems.Sum(ci => ci.Quantity * ci.PriceAtTimeOfPurchase)
+                CartItems = cart.CartItems.Select(ci => new CartItemViewModel
+                {
+                    ProductId = ci.ProductId,
+                    ProductName = ci.Product.Name,
+                    Price = ci.Product.Price,
+                    Quantity = ci.Quantity,
+                    Total = ci.Product.Price * ci.Quantity
+                }).ToList(),
+                TotalAmount = cart.CartItems.Sum(ci => ci.Product.Price * ci.Quantity)
             };
 
-            return View(viewModel);
+            return View(cartViewModel);
         }
 
         [HttpPost]
@@ -72,7 +79,7 @@ namespace GreenMarketBackend.Controllers
                 {
                     ProductId = productId,
                     Quantity = quantity,
-                    CartId = cart.CartId
+                    CartId = cart.CartId    
                 };
                 cart.CartItems.Add(cartItem);
             }

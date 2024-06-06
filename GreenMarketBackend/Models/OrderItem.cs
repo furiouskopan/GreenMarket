@@ -25,7 +25,7 @@ namespace GreenMarketBackend.Models
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
-        public decimal UnitPrice { get; set; }
+        public decimal PriceAtTimeOfPurchase { get; set; }
 
         // Other properties as needed
     }

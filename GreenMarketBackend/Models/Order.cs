@@ -22,7 +22,11 @@ namespace GreenMarketBackend.Models
         [Required]
         public decimal TotalAmount { get; set; }
 
+        [Required]
         public string ShippingAddress { get; set; }
+
+        [Required]
+        public string PaymentMethod { get; set; }
 
 
         // Navigation property for order items

@@ -4,6 +4,7 @@ using GreenMarketBackend.Models.ViewModels.CartViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace GreenMarketBackend.Controllers
 {
@@ -20,31 +21,30 @@ namespace GreenMarketBackend.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var user = await _userManager.GetUserAsync(User);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var cart = await _context.Carts
                 .Include(c => c.CartItems)
                 .ThenInclude(ci => ci.Product)
-                .FirstOrDefaultAsync(c => c.UserId == user.Id);
+                .FirstOrDefaultAsync(c => c.UserId == userId);
 
             if (cart == null)
             {
                 return View(new CartViewModel());
             }
 
-            var cartViewModel = new CartViewModel
+            var viewModel = new CartViewModel
             {
                 CartItems = cart.CartItems.Select(ci => new CartItemViewModel
                 {
-                    ProductId = ci.ProductId,
+                    CartItemId = ci.CartItemId,
                     ProductName = ci.Product.Name,
                     Price = ci.Product.Price,
-                    Quantity = ci.Quantity,
-                    Total = ci.Product.Price * ci.Quantity
+                    Quantity = ci.Quantity
                 }).ToList(),
-                TotalAmount = cart.CartItems.Sum(ci => ci.Product.Price * ci.Quantity)
+                TotalAmount = cart.CartItems.Sum(ci => ci.Quantity * ci.Product.Price)
             };
 
-            return View(cartViewModel);
+            return View(viewModel);
         }
 
         [HttpPost]
@@ -117,5 +117,4 @@ namespace GreenMarketBackend.Controllers
             return RedirectToAction(nameof(Index));
         }
     }
-
 }

@@ -1,26 +1,59 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 using GreenMarketBackend.Data;
 using GreenMarketBackend.Models;
 using GreenMarketBackend.Models.ViewModels;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Security.Claims;
+using GreenMarketBackend.Models.ViewModels.CartViewModels;
 
-namespace GreenMarketBackend.Controllers
+public class CheckoutController : Controller
 {
-    [Authorize]
-    public class CheckoutController : Controller
-    {
-        private readonly ApplicationDbContext _context;
+    private readonly ApplicationDbContext _context;
 
-        public CheckoutController(ApplicationDbContext context)
+    public CheckoutController(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var cart = await _context.Carts
+            .Include(c => c.CartItems)
+            .ThenInclude(ci => ci.Product)
+            .FirstOrDefaultAsync(c => c.UserId == userId);
+
+        if (cart == null || !cart.CartItems.Any())
         {
-            _context = context;
+            return RedirectToAction("Index", "Cart");
         }
 
-        public async Task<IActionResult> Index()
+        var cartItems = cart.CartItems.Select(ci => new CartItemViewModel
+        {
+            CartItemId = ci.CartItemId,
+            ProductName = ci.Product.Name,
+            Quantity = ci.Quantity,
+            Price = ci.Product.Price
+        }).ToList();
+
+        var viewModel = new CheckoutViewModel
+        {
+            Address = string.Empty,
+            PaymentMethod = string.Empty,
+            CartItems = cartItems,
+            TotalAmount = cartItems.Sum(ci => ci.Total)
+        };
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ProcessOrder(CheckoutViewModel model)
+    {
+        if (ModelState.IsValid)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var cart = await _context.Carts
@@ -33,71 +66,62 @@ namespace GreenMarketBackend.Controllers
                 return RedirectToAction("Index", "Cart");
             }
 
-            var viewModel = new CheckoutViewModel
+            var order = new Order
             {
-                Cart = cart,
-                Address = "",
-                PaymentMethod = ""
+                UserId = userId,
+                OrderDate = DateTime.Now,
+                TotalAmount = cart.CartItems.Sum(ci => ci.Quantity * ci.Product.Price),
+                ShippingAddress = model.Address,
+                PaymentMethod = model.PaymentMethod,
+                OrderItems = cart.CartItems.Select(ci => new OrderItem
+                {
+                    ProductId = ci.ProductId,
+                    Quantity = ci.Quantity,
+                    PriceAtTimeOfPurchase = ci.Product.Price
+                }).ToList()
             };
 
-            return View(viewModel);
+            _context.Orders.Add(order);
+            _context.CartItems.RemoveRange(cart.CartItems);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("OrderConfirmation", new { orderId = order.OrderId });
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ProcessOrder(CheckoutViewModel model)
+        var userCart = await _context.Carts
+            .Include(c => c.CartItems)
+            .ThenInclude(ci => ci.Product)
+            .FirstOrDefaultAsync(c => c.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        var cartViewModel = new CheckoutViewModel
         {
-            if (ModelState.IsValid)
+            Address = model.Address,
+            PaymentMethod = model.PaymentMethod,
+            CartItems = userCart.CartItems.Select(ci => new CartItemViewModel
             {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var cart = await _context.Carts
-                    .Include(c => c.CartItems)
-                    .ThenInclude(ci => ci.Product)
-                    .FirstOrDefaultAsync(c => c.UserId == userId);
+                CartItemId = ci.CartItemId,
+                ProductName = ci.Product.Name,
+                Quantity = ci.Quantity,
+                Price = ci.Product.Price
+            }).ToList(),
+            TotalAmount = userCart.CartItems.Sum(ci => ci.Quantity * ci.Product.Price)
+        };
 
-                if (cart == null || !cart.CartItems.Any())
-                {
-                    return RedirectToAction("Index", "Cart");
-                }
+        return View("Index", cartViewModel);
+    }
 
-                var order = new Order
-                {
-                    UserId = userId,
-                    OrderDate = DateTime.Now,
-                    TotalAmount = cart.CartItems.Sum(ci => ci.Quantity * ci.Product.Price),
-                    ShippingAddress = model.Address,
-                    PaymentMethod = model.PaymentMethod,
-                    OrderItems = cart.CartItems.Select(ci => new OrderItem
-                    {
-                        ProductId = ci.ProductId,
-                        Quantity = ci.Quantity,
-                        PriceAtTimeOfPurchase = ci.Product.Price
-                    }).ToList()
-                };
+    public async Task<IActionResult> OrderConfirmation(int orderId)
+    {
+        var order = await _context.Orders
+            .Include(o => o.OrderItems)
+            .ThenInclude(oi => oi.Product)
+            .FirstOrDefaultAsync(o => o.OrderId == orderId);
 
-                _context.Orders.Add(order);
-                _context.CartItems.RemoveRange(cart.CartItems);
-                await _context.SaveChangesAsync();
-
-                return RedirectToAction("OrderConfirmation", new { orderId = order.OrderId });
-            }
-
-            return View("Index", model);
-        }
-
-        public async Task<IActionResult> OrderConfirmation(int orderId)
+        if (order == null)
         {
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product)
-                .FirstOrDefaultAsync(o => o.OrderId == orderId);
-
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            return View(order);
+            return NotFound();
         }
+
+        return View(order);
     }
 }

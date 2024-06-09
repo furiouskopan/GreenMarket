@@ -1,16 +1,22 @@
 ﻿using GreenMarketBackend.Models;
+using GreenMarketBackend.Models.ViewModels.CartViewModels;
 using System.ComponentModel.DataAnnotations;
 
 namespace GreenMarketBackend.Models.ViewModels
 {
     public class CheckoutViewModel
     {
-        public Cart Cart { get; set; }
-
-        [Required]
+        [Required(ErrorMessage = "Shipping Address is required")]
+        [Display(Name = "Shipping Address")]
         public string Address { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Payment Method is required")]
+        [Display(Name = "Payment Method")]
         public string PaymentMethod { get; set; }
+
+        // Properties to display in the view
+        public IEnumerable<CartItemViewModel> CartItems { get; set; }
+
+        public decimal TotalAmount { get; set; }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using GreenMarketBackend.Data;
 using GreenMarketBackend.Hubs;
 using GreenMarketBackend.Models;
+using GreenMarketBackend.Models.ViewModels.CartViewModels;
+using GreenMarketBackend.Models.ViewModels.ChatViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +20,20 @@ namespace GreenMarketBackend.Controllers
             _context = context;
             _hubContext = hubContext;
         }
+        public async Task<IActionResult> Index()
+        {
+            var messages = await _context.Messages
+                .Include(m => m.Sender)
+                .OrderBy(m => m.Timestamp)
+                .ToListAsync();
+
+            var viewModel = new ChatViewModel
+            {
+                Messages = messages
+            };
+
+            return View(viewModel);
+        }
 
         [HttpPost]
         public async Task<IActionResult> SendMessage(int chatSessionId, string content)
@@ -34,7 +50,8 @@ namespace GreenMarketBackend.Controllers
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
-            await _hubContext.Clients.All.SendAsync("ReceiveMessage", chatSessionId, userId, content);
+            var sender = await _context.Users.FindAsync(userId);
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage", sender.UserName, content);
 
             return RedirectToAction("Index", new { chatSessionId });
         }

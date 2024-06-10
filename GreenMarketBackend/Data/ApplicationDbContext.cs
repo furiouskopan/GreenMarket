@@ -21,6 +21,8 @@ namespace GreenMarketBackend.Data
         public DbSet<Report> Reports { get; set; }
         public DbSet<ApplicationUser> Users { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<ChatSession> ChatSessions { get; set; }
+        public DbSet<Message> Messages { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -99,6 +101,30 @@ namespace GreenMarketBackend.Data
                 .HasOne(r => r.User)
                 .WithMany()
                 .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ChatSession>()
+                .HasOne(cs => cs.User1)
+                .WithMany()
+                .HasForeignKey(cs => cs.User1Id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ChatSession>()
+                .HasOne(cs => cs.User2)
+                .WithMany()
+                .HasForeignKey(cs => cs.User2Id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.ChatSession)
+                .WithMany(cs => cs.Messages)
+                .HasForeignKey(m => m.ChatSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Seeding categories

@@ -1,66 +1,99 @@
 ﻿@using GreenMarketBackend.Models.ViewModels
 @model CheckoutViewModel
 
-<h2>Checkout</h2>
+@{
+    ViewData["Title"] = "Checkout";
+    Layout = "~/Views/Shared/_NavBar.cshtml";
+}
 
-<form asp-action="ProcessOrder" method="post" class="mt-4">
-    <div class="mb-4">
-        <h3>Shipping Address</h3>
-        <div class="form-group">
-            <label asp-for="Address" class="control-label"></label>
-            <input type="text" asp-for="Address" class="form-control" />
-            <span asp-validation-for="Address" class="text-danger"></span>
+<div class="m-3 mt-4">
+    <h2>Checkout</h2>
+    <form asp-action="ProcessOrder" method="post" class="mt-4">
+        <div class="mb-4">
+            <h3>Shipping Address</h3>
+            <div class="form-group">
+                <label asp-for="Address" class="control-label"></label>
+                <input type="text" asp-for="Address" class="form-control" />
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
         </div>
-    </div>
 
-    <div class="mb-4">
-        <h3>Payment Method</h3>
-        <div class="form-group">
-            <label asp-for="PaymentMethod" class="control-label"></label>
-            <select asp-for="PaymentMethod" class="form-control">
-                <option value="">Select a payment method</option>
-                <option value="CreditCard">Credit Card</option>
-                <option value="PayPal">PayPal</option>
-                <option value="Cash">Cash</option>
-            </select>
-            <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+        <div class="mb-4">
+            <h3>Payment Method</h3>
+            <div class="form-group">
+                <label asp-for="PaymentMethod" class="control-label"></label>
+                <select asp-for="PaymentMethod" class="form-control" id="paymentMethodSelect">
+                    <option value="">Select a payment method</option>
+                    <option value="CreditCard">Credit Card</option>
+                    <option value="PayPal">PayPal</option>
+                    <option value="Cash">Cash</option>
+                </select>
+                <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+            </div>
         </div>
-    </div>
 
-    <div class="mb-4">
-        <h3>Your Cart</h3>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Quantity</th>
-                    <th>Price</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (int i = 0; i < Model.CartItems.Count(); i++)
-                {
+        <div id="creditCardDetails" class="mb-4" style="display:none;">
+            <h3>Credit Card Details</h3>
+            <div class="form-group">
+                <label for="cardNumber">Card Number</label>
+                <input type="text" class="form-control" id="cardNumber" name="CardNumber" />
+            </div>
+            <div class="form-group">
+                <label for="expiryDate">Expiry Date</label>
+                <input type="text" class="form-control" id="expiryDate" name="ExpiryDate" placeholder="MM/YY" />
+            </div>
+            <div class="form-group">
+                <label for="cvv">CVV</label>
+                <input type="text" class="form-control" id="cvv" name="CVV" />
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <h3>Your Cart</h3>
+            <table class="table table-striped">
+                <thead>
                     <tr>
-                        <td>@Model.CartItems.ElementAt(i).ProductName</td>
-                        <td>@Model.CartItems.ElementAt(i).Quantity</td>
-                        <td>@Model.CartItems.ElementAt(i).Price.ToString("C")</td>
-                        <td>@Model.CartItems.ElementAt(i).Total.ToString("C")</td>
-                        <!-- Hidden fields to include cart items in the form post -->
-                        <input type="hidden" name="CartItems[@i].ProductName" value="@Model.CartItems.ElementAt(i).ProductName" />
-                        <input type="hidden" name="CartItems[@i].Quantity" value="@Model.CartItems.ElementAt(i).Quantity" />
-                        <input type="hidden" name="CartItems[@i].Price" value="@Model.CartItems.ElementAt(i).Price" />
-                        <input type="hidden" name="CartItems[@i].Total" value="@Model.CartItems.ElementAt(i).Total" />
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Total</th>
                     </tr>
-                }
-            </tbody>
-        </table>
-        <p class="text-right"><strong>Total Amount:</strong> @Model.TotalAmount.ToString("C")</p>
-    </div>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.CartItems.Count(); i++)
+                    {
+                        <tr>
+                            <td>@Model.CartItems.ElementAt(i).ProductName</td>
+                            <td>@Model.CartItems.ElementAt(i).Quantity</td>
+                            <td>@Model.CartItems.ElementAt(i).Price.ToString("C")</td>
+                            <td>@Model.CartItems.ElementAt(i).Total.ToString("C")</td>
+                            <!-- Hidden fields to include cart items in the form post -->
+                            <input type="hidden" name="CartItems[@i].ProductName" value="@Model.CartItems.ElementAt(i).ProductName" />
+                            <input type="hidden" name="CartItems[@i].Quantity" value="@Model.CartItems.ElementAt(i).Quantity" />
+                            <input type="hidden" name="CartItems[@i].Price" value="@Model.CartItems.ElementAt(i).Price" />
+                            <input type="hidden" name="CartItems[@i].Total" value="@Model.CartItems.ElementAt(i).Total" />
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <p class="text-right"><strong>Total Amount:</strong> @Model.TotalAmount.ToString("C")</p>
+        </div>
 
-    <button type="submit" class="btn btn-primary">Place Order</button>
-</form>
+        <button type="submit" class="btn btn-primary">Place Order</button>
+    </form>
+</div>
+
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('paymentMethodSelect').addEventListener('change', function () {
+            var creditCardDetails = document.getElementById('creditCardDetails');
+            if (this.value === 'CreditCard') {
+                creditCardDetails.style.display = 'block';
+            } else {
+                creditCardDetails.style.display = 'none';
+            }
+        });
+    </script>
 }

@@ -1,54 +1,39 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using System;
+using System.Threading.Tasks;
 
 namespace GreenMarketBackend.Hubs
 {
     public class ChatHub : Hub
     {
-        public async Task SendMessage(string sender, string recipient, string message)
+        private static readonly Dictionary<string, string> _connections = new();
+
+        public override Task OnConnectedAsync()
         {
-            var recipientConnectionId = ConnectionMapping.GetConnectionId(recipient);
-            if (recipientConnectionId != null)
+            var userName = Context.User?.Identity?.Name;
+            if (userName != null)
             {
-                await Clients.Client(recipientConnectionId).SendAsync("ReceiveMessage", sender, message);
+                _connections[Context.ConnectionId] = userName;
             }
-            else
-            {
-                await Clients.Caller.SendAsync("UserNotFound", recipient);
-            }
+            return base.OnConnectedAsync();
         }
 
-        public override async Task OnConnectedAsync()
+        public override Task OnDisconnectedAsync(Exception? exception)
         {
-            var userName = Context.User.Identity.Name;
-            ConnectionMapping.Add(userName, Context.ConnectionId);
-            await base.OnConnectedAsync();
+            _connections.Remove(Context.ConnectionId);
+            return base.OnDisconnectedAsync(exception);
         }
 
-        public override async Task OnDisconnectedAsync(Exception exception)
+        public async Task SendMessage(string user, string message, string toUser)
         {
-            var userName = Context.User.Identity.Name;
-            ConnectionMapping.Remove(userName);
-            await base.OnDisconnectedAsync(exception);
+            Console.WriteLine($"SendMessage called with user: {user}, message: {message}, toUser: {toUser}");
+
+            var connectionId = _connections.FirstOrDefault(x => x.Value == toUser).Key;
+            if (connectionId != null)
+            {
+                await Clients.Client(connectionId).SendAsync("ReceiveMessage", user, message);
+            }
         }
     }
 
-    public static class ConnectionMapping
-    {
-        private static readonly Dictionary<string, string> _connections = new Dictionary<string, string>();
-
-        public static void Add(string userName, string connectionId)
-        {
-            _connections[userName] = connectionId;
-        }
-
-        public static void Remove(string userName)
-        {
-            _connections.Remove(userName);
-        }
-
-        public static string GetConnectionId(string userName)
-        {
-            return _connections.TryGetValue(userName, out var connectionId) ? connectionId : null;
-        }
-    }
 }

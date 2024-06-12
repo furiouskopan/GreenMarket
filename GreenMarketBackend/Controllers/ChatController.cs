@@ -21,16 +21,18 @@ namespace GreenMarketBackend.Controllers
             _hubContext = hubContext;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int chatSessionId)
         {
             var messages = await _context.Messages
                 .Include(m => m.Sender)
+                .Where(m => m.ChatSessionId == chatSessionId)
                 .OrderBy(m => m.Timestamp)
                 .ToListAsync();
 
             var viewModel = new ChatViewModel
             {
-                Messages = messages
+                Messages = messages,
+                ChatSessionId = chatSessionId
             };
 
             return View(viewModel);
@@ -53,7 +55,6 @@ namespace GreenMarketBackend.Controllers
             {
                 ChatSessionId = chatSessionId,
                 SenderId = userId,
-                RecipientId = recipientUser.Id,
                 Content = content,
                 Timestamp = DateTime.Now
             };
@@ -61,7 +62,7 @@ namespace GreenMarketBackend.Controllers
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
-            await _hubContext.Clients.User(recipientUser.Id).SendAsync("ReceiveMessage", sender.UserName, content);
+            await _hubContext.Clients.User(recipientUser.Id).SendAsync("ReceiveMessage", sender.UserName, content, chatSessionId);
 
             return RedirectToAction("Index", new { chatSessionId });
         }

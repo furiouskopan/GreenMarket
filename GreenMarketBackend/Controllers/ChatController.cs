@@ -20,6 +20,7 @@ namespace GreenMarketBackend.Controllers
             _context = context;
             _hubContext = hubContext;
         }
+
         public async Task<IActionResult> Index()
         {
             var messages = await _context.Messages
@@ -36,13 +37,23 @@ namespace GreenMarketBackend.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SendMessage(int chatSessionId, string content)
+        public async Task<IActionResult> SendMessage(int chatSessionId, string recipient, string content)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var sender = await _context.Users.FindAsync(userId);
+            var recipientUser = await _context.Users.FirstOrDefaultAsync(u => u.UserName == recipient);
+
+            if (recipientUser == null)
+            {
+                // Handle recipient not found
+                return RedirectToAction("Index", new { chatSessionId });
+            }
+
             var message = new Message
             {
                 ChatSessionId = chatSessionId,
                 SenderId = userId,
+                RecipientId = recipientUser.Id,
                 Content = content,
                 Timestamp = DateTime.Now
             };
@@ -50,8 +61,7 @@ namespace GreenMarketBackend.Controllers
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
-            var sender = await _context.Users.FindAsync(userId);
-            await _hubContext.Clients.All.SendAsync("ReceiveMessage", sender.UserName, content);
+            await _hubContext.Clients.User(recipientUser.Id).SendAsync("ReceiveMessage", sender.UserName, content);
 
             return RedirectToAction("Index", new { chatSessionId });
         }

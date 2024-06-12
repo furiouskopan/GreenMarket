@@ -20,8 +20,10 @@
     </div>
 }
  *@
+
 @{
-    ViewData["Title"] = "Chat Room";
+    ViewData["Title"] = "Chat";
+    Layout = "~/Views/Shared/_NavBar.cshtml";
 }
 
 <h2>Chat Room</h2>
@@ -41,28 +43,49 @@
 </div>
 
 @section Scripts {
-    <script src="~/lib/signalr/signalr.js"></script>
+    <!-- Include SignalR from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.2/signalr.min.js"></script>
+
     <script>
         const connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
 
-        connection.on("ReceiveMessage", function (user, message) {
-            const msg = user + ": " + message;
-            const div = document.createElement("div");
-            div.innerHTML = "<strong>" + user + ":</strong> " + message;
-            document.getElementById("messagesList").appendChild(div);
+        connection.onclose(async () => {
+            console.log("Connection closed. Trying to reconnect...");
+            await start();
         });
 
-        connection.start().catch(function (err) {
-            return console.error(err.toString());
+        connection.on("ReceiveMessage", function (user, message) {
+            const msg = document.createElement("div");
+            msg.innerHTML = `<strong>${user}:</strong> ${message}`;
+            document.getElementById("messagesList").appendChild(msg);
         });
+
+        // Start the connection and log or handle errors
+        async function start() {
+            try {
+                await connection.start();
+                console.log("SignalR Connected.");
+            } catch (err) {
+                console.error("SignalR Connection Error: ", err);
+                setTimeout(start, 5000); // Retry every 5 seconds if not connected
+            }
+        }
+
+        start();
 
         document.getElementById("sendButton").addEventListener("click", function (event) {
             const user = document.getElementById("userInput").value;
             const message = document.getElementById("messageInput").value;
-            connection.invoke("SendMessage", user, message).catch(function (err) {
-                return console.error(err.toString());
-            });
-            event.preventDefault();
+            if (user && message) { // Check if the inputs are not empty
+                connection.invoke("SendMessage", user, message)
+                    .catch(function (err) {
+                        console.error("SignalR Send Error: ", err.toString());
+                    });
+            } else {
+                console.warn("User and message are required.");
+            }
+            event.preventDefault(); // Prevent the form from submitting normally
         });
+
     </script>
 }

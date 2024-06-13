@@ -34,27 +34,56 @@
 
         connection.on("ReceiveMessage", function (user, message) {
             const msg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            const encodedMsg = user + " says " + msg;
-            const li = document.createElement("li");
-            li.textContent = encodedMsg;
-            document.getElementById("messagesList").appendChild(li);
+            const encodedMsg = `<strong>${user}:</strong> ${msg}`;
+            const div = document.createElement("div");
+            div.innerHTML = encodedMsg;
+            document.getElementById("messagesList").appendChild(div);
+            console.log("Received message:", user, message);
         });
 
         connection.start().then(function () {
-            console.log('Connected to hub'); // Should show in console when connected
+            console.log('Connected to hub');
         }).catch(function (err) {
-            return console.error(err.toString());
+            console.error('Error connecting to hub:', err);
         });
 
         document.getElementById("sendButton").addEventListener("click", function (event) {
-            console.log("Button clicked"); // Check if this logs when you click the button
             const user = document.getElementById("userInput").value;
-            const message = document.getElementById("messageInput").value;
+            const message = document.getElementById("messageInput").value.trim();
             const toUser = document.getElementById("toUserInput").value;
-            console.log(user, message, toUser); // Check if these values are logged correctly
+            const chatSessionId = document.getElementById("chatSessionId").value;
+
+            console.log("Sending message:", { chatSessionId, content: message, toUser });
+
+            if (!message) {
+                console.error('Message content cannot be empty.');
+                return;
+            }
+
             connection.invoke("SendMessage", user, message, toUser).catch(function (err) {
-                console.error(err.toString());
+                console.error('Error sending message:', err);
             });
+
+            fetch('/Chat/SendMessage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({
+                    chatSessionId: parseInt(chatSessionId),
+                    content: message,
+                    toUser: toUser
+                })
+            }).then(function (response) {
+                if (!response.ok) {
+                    console.error('Failed to send message to server:', response.status);
+                    return response.text().then(text => { throw new Error(text); });
+                }
+            }).catch(function (err) {
+                console.error('Failed to send message to server:', err);
+            });
+
             event.preventDefault();
         });
     </script>

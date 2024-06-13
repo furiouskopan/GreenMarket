@@ -26,14 +26,20 @@ namespace GreenMarketBackend.Hubs
 
         public async Task SendMessage(string user, string message, string toUser)
         {
-            Console.WriteLine($"SendMessage called with user: {user}, message: {message}, toUser: {toUser}");
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                throw new ArgumentException("Message content cannot be emptyHUB", nameof(message));
+            }
 
             var connectionId = _connections.FirstOrDefault(x => x.Value == toUser).Key;
             if (connectionId != null)
             {
                 await Clients.Client(connectionId).SendAsync("ReceiveMessage", user, message);
             }
+            else
+            {
+                Console.WriteLine("Recipient not connected: " + toUser);
+            }
         }
     }
-
 }

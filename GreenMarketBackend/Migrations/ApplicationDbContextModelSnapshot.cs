@@ -153,7 +153,7 @@ namespace GreenMarketBackend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Carts");
+                    b.ToTable("Carts", (string)null);
                 });
 
             modelBuilder.Entity("GreenMarketBackend.Models.CartItem", b =>
@@ -185,7 +185,7 @@ namespace GreenMarketBackend.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("CartItems");
+                    b.ToTable("CartItems", (string)null);
                 });
 
             modelBuilder.Entity("GreenMarketBackend.Models.Category", b =>
@@ -212,7 +212,7 @@ namespace GreenMarketBackend.Migrations
 
                     b.HasIndex("ParentCategoryId");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
 
                     b.HasData(
                         new
@@ -265,7 +265,7 @@ namespace GreenMarketBackend.Migrations
 
                     b.HasIndex("User2Id");
 
-                    b.ToTable("ChatSessions");
+                    b.ToTable("ChatSessions", (string)null);
                 });
 
             modelBuilder.Entity("GreenMarketBackend.Models.Message", b =>
@@ -296,7 +296,7 @@ namespace GreenMarketBackend.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("Messages");
+                    b.ToTable("Messages", (string)null);
                 });
 
             modelBuilder.Entity("GreenMarketBackend.Models.Order", b =>
@@ -334,7 +334,7 @@ namespace GreenMarketBackend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("GreenMarketBackend.Models.OrderItem", b =>
@@ -363,7 +363,7 @@ namespace GreenMarketBackend.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("OrderItems");
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("GreenMarketBackend.Models.Product", b =>
@@ -433,7 +433,7 @@ namespace GreenMarketBackend.Migrations
 
                     b.HasIndex("ParentCategoryId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
 
                     b.HasData(
                         new
@@ -501,7 +501,7 @@ namespace GreenMarketBackend.Migrations
 
                     b.HasIndex("ReporterUserId");
 
-                    b.ToTable("Reports");
+                    b.ToTable("Reports", (string)null);
                 });
 
             modelBuilder.Entity("GreenMarketBackend.Models.Review", b =>
@@ -535,7 +535,7 @@ namespace GreenMarketBackend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Reviews");
+                    b.ToTable("Reviews", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

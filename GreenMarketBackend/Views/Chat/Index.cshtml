@@ -60,6 +60,12 @@
                 return;
             }
 
+            // Append the message to the messagesList for the sender immediately
+            const encodedMsg = `<strong>${user}:</strong> ${message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
+            const div = document.createElement("div");
+            div.innerHTML = encodedMsg;
+            document.getElementById("messagesList").appendChild(div);
+
             connection.invoke("SendMessage", user, message, toUser).catch(function (err) {
                 console.error('Error sending message:', err);
             });

@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using GreenMarketBackend.Data;
+using GreenMarketBackend.Models;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
 
@@ -6,6 +9,11 @@ namespace GreenMarketBackend.Hubs
 {
     public class ChatHub : Hub
     {
+        private readonly ApplicationDbContext _context;
+        public ChatHub(ApplicationDbContext context)
+        {
+            _context = context;
+        }
         private static readonly Dictionary<string, string> _connections = new();
 
         public override Task OnConnectedAsync()
@@ -40,6 +48,35 @@ namespace GreenMarketBackend.Hubs
             {
                 Console.WriteLine("Recipient not connected: " + toUser);
             }
+            var sender = await _context.Users.FirstOrDefaultAsync(u => u.UserName == user);
+            var recipient = await _context.Users.FirstOrDefaultAsync(u => u.UserName == toUser);
+            var chatSession = await _context.ChatSessions
+                .Include(cs => cs.Messages)
+                .FirstOrDefaultAsync(cs => (cs.User1Id == sender.Id && cs.User2Id == recipient.Id) ||
+                                            (cs.User1Id == recipient.Id && cs.User2Id == sender.Id));
+
+            if (chatSession == null)
+            {
+                chatSession = new ChatSession
+                {
+                    User1Id = sender.Id,
+                    User2Id = recipient.Id,
+                    Messages = new List<Message>()
+                };
+                _context.ChatSessions.Add(chatSession);
+            }
+
+            var newMessage = new Message
+            {
+                Content = message,
+                Timestamp = DateTime.Now,
+                SenderId = sender.Id,
+                ChatSessionId = chatSession.Id
+            };
+
+            chatSession.Messages.Add(newMessage);
+            _context.Messages.Add(newMessage);
+            await _context.SaveChangesAsync();
         }
     }
 }

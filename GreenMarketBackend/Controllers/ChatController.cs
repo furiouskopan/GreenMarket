@@ -26,14 +26,16 @@ namespace GreenMarketBackend.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var messages = await _context.Messages
-                .Include(m => m.Sender)
-                .OrderBy(m => m.Timestamp)
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var chatSessions = await _context.ChatSessions
+                .Where(cs => cs.User1Id == userId || cs.User2Id == userId)
+                .Include(cs => cs.Messages)
+                .ThenInclude(m => m.Sender)
                 .ToListAsync();
 
             var viewModel = new ChatViewModel
             {
-                Messages = messages
+                ChatSessions = chatSessions
             };
 
             return View(viewModel);

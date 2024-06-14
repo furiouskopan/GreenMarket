@@ -2,7 +2,6 @@
 {
     public class ChatViewModel
     {
-        public int ChatSessionId {  get; set; }
-        public IEnumerable<Message> Messages { get; set; }
+        public List<ChatSession> ChatSessions { get; set; }
     }
 }

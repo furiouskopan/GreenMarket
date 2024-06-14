@@ -1,4 +1,7 @@
-﻿@{
+﻿@using System.Security.Claims
+@model GreenMarketBackend.Models.ViewModels.ChatViewModels.ChatViewModel
+
+@{
     ViewData["Title"] = "Chat";
     Layout = "~/Views/Shared/_NavBar.cshtml";
 }
@@ -8,21 +11,24 @@
 
 <h2>Chat Room</h2>
 
-<div id="chatContainer" style="border: 1px solid #ccc; padding: 10px; width: 50%; margin: 0 auto;">
-    <div id="messagesList" style="height: 300px; overflow-y: scroll; border-bottom: 1px solid #ccc; margin-bottom: 10px;">
-        @foreach (var message in Model.Messages)
-        {
-            <div>
-                <strong>@message.Sender.UserName:</strong> @message.Content
-            </div>
-        }
+@foreach (var session in Model.ChatSessions)
+{
+    <div class="chat-session" data-session-id="@session.Id">
+        <h3>Chat with @(session.User1Id == User.FindFirstValue(ClaimTypes.NameIdentifier) ? session.User2.UserName : session.User1.UserName)</h3>
+        <div id="messagesList_@session.Id" style="height: 300px; overflow-y: scroll; border-bottom: 1px solid #ccc; margin-bottom: 10px;">
+            @foreach (var message in session.Messages)
+            {
+                <div>
+                    <strong>@message.Sender.UserName:</strong> @message.Content
+                </div>
+            }
+        </div>
+        <input type="text" class="userInput" placeholder="Your Name" style="width: 100%; margin-bottom: 10px;" />
+        <input type="text" class="messageInput" placeholder="Message" style="width: 100%; margin-bottom: 10px;" />
+        <input type="hidden" class="toUserInput" value="@(session.User1Id == User.FindFirstValue(ClaimTypes.NameIdentifier) ? session.User2.UserName : session.User1.UserName)" />
+        <button class="sendButton" style="width: 100%;" data-session-id="@session.Id">Send</button>
     </div>
-    <input type="hidden" id="chatSessionId" value="@Model.ChatSessionId" />
-    <input type="text" id="userInput" placeholder="Your Name" style="width: 100%; margin-bottom: 10px;" />
-    <input type="text" id="messageInput" placeholder="Message" style="width: 100%; margin-bottom: 10px;" />
-    <input type="text" id="toUserInput" placeholder="Recipient's Name" style="width: 100%; margin-bottom: 10px;" />
-    <button id="sendButton" style="width: 100%;">Send</button>
-</div>
+}
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.2/signalr.min.js"></script>
@@ -37,7 +43,12 @@
             const encodedMsg = `<strong>${user}:</strong> ${msg}`;
             const div = document.createElement("div");
             div.innerHTML = encodedMsg;
-            document.getElementById("messagesList").appendChild(div);
+
+            const activeSession = document.querySelector('.chat-session.active');
+            if (activeSession) {
+                const sessionId = activeSession.dataset.sessionId;
+                document.getElementById(`messagesList_${sessionId}`).appendChild(div);
+            }
             console.log("Received message:", user, message);
         });
 
@@ -47,50 +58,46 @@
             console.error('Error connecting to hub:', err);
         });
 
-        document.getElementById("sendButton").addEventListener("click", function (event) {
-            const user = document.getElementById("userInput").value;
-            const message = document.getElementById("messageInput").value.trim();
-            const toUser = document.getElementById("toUserInput").value;
-            const chatSessionId = document.getElementById("chatSessionId").value;
+        document.querySelectorAll(".sendButton").forEach(button => {
+            button.addEventListener("click", function (event) {
+                event.preventDefault(); // Ensure form is not submitted in a standard way that could reset fields
 
-            console.log("Sending message:", { chatSessionId, content: message, toUser });
+                const sessionId = this.dataset.sessionId;
+                const user = document.querySelector(`.chat-session[data-session-id="${sessionId}"] .userInput`).value;
+                const message = document.querySelector(`.chat-session[data-session-id="${sessionId}"] .messageInput`).value.trim();
+                const toUser = document.querySelector(`.chat-session[data-session-id="${sessionId}"] .toUserInput`).value;
 
-            if (!message) {
-                console.error('Message content cannot be empty.');
-                return;
-            }
+                console.log("Sending message:", { sessionId, content: message, toUser });
 
-            // Append the message to the messagesList for the sender immediately
-            const encodedMsg = `<strong>${user}:</strong> ${message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
-            const div = document.createElement("div");
-            div.innerHTML = encodedMsg;
-            document.getElementById("messagesList").appendChild(div);
-
-            connection.invoke("SendMessage", user, message, toUser).catch(function (err) {
-                console.error('Error sending message:', err);
-            });
-
-            fetch('/Chat/SendMessage', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: JSON.stringify({
-                    chatSessionId: parseInt(chatSessionId),
-                    content: message,
-                    toUser: toUser
-                })
-            }).then(function (response) {
-                if (!response.ok) {
-                    console.error('Failed to send message to server:', response.status);
-                    return response.text().then(text => { throw new Error(text); });
+                if (!message) {
+                    console.error('Message content cannot be empty.');
+                    return;
                 }
-            }).catch(function (err) {
-                console.error('Failed to send message to server:', err);
-            });
 
-            event.preventDefault();
+                connection.invoke("SendMessage", user, message, toUser).catch(function (err) {
+                    console.error('Error sending message:', err);
+                });
+
+                fetch('/Chat/SendMessage', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({
+                        chatSessionId: parseInt(sessionId),
+                        content: message,
+                        toUser: toUser
+                    })
+                }).then(function (response) {
+                    if (!response.ok) {
+                        console.error('Failed to send message to server:', response.status);
+                        return response.text().then(text => { throw new Error(text); });
+                    }
+                }).catch(function (err) {
+                    console.error('Failed to send message to server:', err);
+                });
+            });
         });
     </script>
 }

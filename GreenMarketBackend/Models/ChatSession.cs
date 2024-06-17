@@ -7,6 +7,6 @@
         public ApplicationUser User1 { get; set; }
         public string User2Id { get; set; }
         public ApplicationUser User2 { get; set; }
-        public ICollection<Message> Messages { get; set; }
+        public ICollection<Message> Messages { get; set; } = new List<Message>();
     }
 }

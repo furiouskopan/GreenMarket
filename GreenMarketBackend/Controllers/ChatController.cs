@@ -1,7 +1,6 @@
 ﻿using GreenMarketBackend.Data;
 using GreenMarketBackend.Hubs;
 using GreenMarketBackend.Models;
-using GreenMarketBackend.Models.ViewModels.CartViewModels;
 using GreenMarketBackend.Models.ViewModels.ChatViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -31,6 +30,8 @@ namespace GreenMarketBackend.Controllers
                 .Where(cs => cs.User1Id == userId || cs.User2Id == userId)
                 .Include(cs => cs.Messages)
                 .ThenInclude(m => m.Sender)
+                .Include(cs => cs.User1) // Include User1
+                .Include(cs => cs.User2) // Include User2
                 .ToListAsync();
 
             var viewModel = new ChatViewModel
@@ -41,59 +42,86 @@ namespace GreenMarketBackend.Controllers
             return View(viewModel);
         }
 
+
         [HttpPost]
-        public async Task<IActionResult> SendMessage(int chatSessionId, string content, string toUser)
+        public async Task<IActionResult> StartChatByUsername([FromBody] StartChatRequest model)
         {
-            try
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var recipient = await _context.Users.FirstOrDefaultAsync(u => u.UserName == model.Username);
+            if (recipient == null)
             {
-                Console.WriteLine($"SendMessage called with chatSessionId: {chatSessionId}, content: '{content}', toUser: '{toUser}'");
+                return BadRequest("Recipient not found.");
+            }
 
-                if (string.IsNullOrWhiteSpace(content))
-                {
-                    Console.WriteLine("Message content is empty");
-                    return BadRequest("Message content cannot be empty.");
-                }
+            var existingSession = await _context.ChatSessions
+                .FirstOrDefaultAsync(cs =>
+                    (cs.User1Id == userId && cs.User2Id == recipient.Id) ||
+                    (cs.User1Id == recipient.Id && cs.User2Id == userId));
 
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (userId == null)
+            if (existingSession == null)
+            {
+                var chatSession = new ChatSession
                 {
-                    Console.WriteLine("User not authenticated");
-                    return BadRequest("User not authenticated.");
-                }
-
-                var sender = await _context.Users.FindAsync(userId);
-                if (sender == null)
-                {
-                    Console.WriteLine("Sender not found");
-                    return BadRequest("Sender not found.");
-                }
-
-                var message = new Message
-                {
-                    ChatSessionId = chatSessionId,
-                    SenderId = userId,
-                    Content = content,
-                    Timestamp = DateTime.Now,
-                    Sender = sender
+                    User1Id = userId,
+                    User2Id = recipient.Id
                 };
-
-                _context.Messages.Add(message);
+                _context.ChatSessions.Add(chatSession);
                 await _context.SaveChangesAsync();
-                Console.WriteLine("Message saved successfully");
-
-                var recipient = await _context.Users.FirstOrDefaultAsync(u => u.Email == toUser);
-                if (recipient != null)
-                {
-                    await _hubContext.Clients.User(recipient.Id).SendAsync("ReceiveMessage", sender.UserName, content);
-                }
-
-                return Ok();
+                return Json(new { sessionId = chatSession.Id });
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error saving message: {ex.Message}");
-                return StatusCode(500, "Internal server error");
-            }
+
+            return Json(new { sessionId = existingSession.Id });
         }
+
+        public class StartChatRequest
+        {
+            public string Username { get; set; }
+        }
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> SendMessage([FromBody] MessageModel model)
+        {
+            if (string.IsNullOrWhiteSpace(model.Content))
+            {
+                return BadRequest("Message content cannot be empty.");
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+            {
+                return BadRequest("User not authenticated.");
+            }
+
+            var sender = await _context.Users.FindAsync(userId);
+            if (sender == null)
+            {
+                return BadRequest("Sender not found.");
+            }
+
+            var chatSession = await _context.ChatSessions.FindAsync(model.ChatSessionId);
+            if (chatSession == null)
+            {
+                return BadRequest("Chat session not found.");
+            }
+
+            var message = new Message
+            {
+                ChatSessionId = model.ChatSessionId,
+                SenderId = userId,
+                Content = model.Content,
+                Timestamp = DateTime.Now
+            };
+
+            _context.Messages.Add(message);
+            await _context.SaveChangesAsync();
+
+            var recipientId = (chatSession.User1Id == userId) ? chatSession.User2Id : chatSession.User1Id;
+            await _hubContext.Clients.User(recipientId.ToString()).SendAsync("ReceiveMessage", sender.UserName, model.Content);
+
+            return Ok();
+        }
+
     }
-    }
+}

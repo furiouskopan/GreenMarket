@@ -5,34 +5,32 @@
     ViewData["Title"] = "Chat";
     Layout = "~/Views/Shared/_NavBar.cshtml";
 }
+
 <head>
     <link rel="stylesheet" href="~/css/styles.css" asp-append-version="true" />
 </head>
-
 <h2>Chat Room</h2>
+
+<button id="startNewChatButton" style="margin-bottom: 20px;">Start a New Chat</button>
+<input type="text" id="newChatUsername" placeholder="Enter username to chat" style="margin-bottom: 20px;" />
 
 @foreach (var session in Model.ChatSessions)
 {
     <div class="chat-session" data-session-id="@session.Id">
         <h3>Chat with @(session.User1Id == User.FindFirstValue(ClaimTypes.NameIdentifier) ? session.User2.UserName : session.User1.UserName)</h3>
-        <div id="messagesList_@session.Id" style="height: 300px; overflow-y: scroll; border-bottom: 1px solid #ccc; margin-bottom: 10px;">
+        <div id="messagesList_@session.Id" class="messages-list" style="height: 300px; overflow-y: scroll; border-bottom: 1px solid #ccc; margin-bottom: 10px;">
             @foreach (var message in session.Messages)
             {
-                <div>
-                    <strong>@message.Sender.UserName:</strong> @message.Content
-                </div>
+                <div><strong>@message.Sender.UserName:</strong> @message.Content</div>
             }
         </div>
-        <input type="text" class="userInput" placeholder="Your Name" style="width: 100%; margin-bottom: 10px;" />
         <input type="text" class="messageInput" placeholder="Message" style="width: 100%; margin-bottom: 10px;" />
-        <input type="hidden" class="toUserInput" value="@(session.User1Id == User.FindFirstValue(ClaimTypes.NameIdentifier) ? session.User2.UserName : session.User1.UserName)" />
         <button class="sendButton" style="width: 100%;" data-session-id="@session.Id">Send</button>
     </div>
 }
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.2/signalr.min.js"></script>
-
     <script>
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/chatHub")
@@ -44,39 +42,49 @@
             const div = document.createElement("div");
             div.innerHTML = encodedMsg;
 
-            const activeSession = document.querySelector('.chat-session.active');
-            if (activeSession) {
-                const sessionId = activeSession.dataset.sessionId;
-                document.getElementById(`messagesList_${sessionId}`).appendChild(div);
-            }
-            console.log("Received message:", user, message);
+            // Find the correct session to append the message
+            document.querySelectorAll('.chat-session').forEach(session => {
+                if (session.dataset.sessionId === user.sessionId.toString()) {
+                    session.querySelector('.messages-list').appendChild(div);
+                }
+            });
         });
 
-        connection.start().then(function () {
-            console.log('Connected to hub');
-        }).catch(function (err) {
-            console.error('Error connecting to hub:', err);
+        connection.start().then(() => console.log('Connected to hub')).catch(err => console.error('Error connecting to hub:', err));
+
+        document.getElementById('startNewChatButton').addEventListener('click', function () {
+            const username = document.getElementById('newChatUsername').value;
+            if (username) {
+                fetch('/Chat/StartChatByUsername', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ username: username })
+                }).then(response => response.json())
+                    .then(data => {
+                        if (data.sessionId) {
+                            console.log('Chat started with session:', data.sessionId);
+                            // Optionally redirect to the chat session or update the UI to show it
+                        }
+                    }).catch(error => {
+                        console.error('Failed to start chat:', error);
+                    });
+            }
         });
+
 
         document.querySelectorAll(".sendButton").forEach(button => {
             button.addEventListener("click", function (event) {
-                event.preventDefault(); // Ensure form is not submitted in a standard way that could reset fields
-
+                event.preventDefault();
                 const sessionId = this.dataset.sessionId;
-                const user = document.querySelector(`.chat-session[data-session-id="${sessionId}"] .userInput`).value;
-                const message = document.querySelector(`.chat-session[data-session-id="${sessionId}"] .messageInput`).value.trim();
-                const toUser = document.querySelector(`.chat-session[data-session-id="${sessionId}"] .toUserInput`).value;
-
-                console.log("Sending message:", { sessionId, content: message, toUser });
-
+                const messageInput = document.querySelector(`.chat-session[data-session-id="${sessionId}"] .messageInput`);
+                const message = messageInput.value.trim();
                 if (!message) {
-                    console.error('Message content cannot be empty.');
+                    alert('Message content cannot be empty.');
                     return;
                 }
-
-                connection.invoke("SendMessage", user, message, toUser).catch(function (err) {
-                    console.error('Error sending message:', err);
-                });
 
                 fetch('/Chat/SendMessage', {
                     method: 'POST',
@@ -85,17 +93,22 @@
                         'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                     },
                     body: JSON.stringify({
-                        chatSessionId: parseInt(sessionId),
-                        content: message,
-                        toUser: toUser
+                        chatSessionId: parseInt(sessionId, 10),
+                        content: message
                     })
-                }).then(function (response) {
+                }).then(response => {
                     if (!response.ok) {
                         console.error('Failed to send message to server:', response.status);
                         return response.text().then(text => { throw new Error(text); });
+                    } else {
+                        // Add the message immediately to the UI
+                        const div = document.createElement('div');
+                        div.innerHTML = `<strong>You:</strong> ${message}`;
+                        document.getElementById(`messagesList_${sessionId}`).appendChild(div);
+                        messageInput.value = ''; // Clear the input after successful send
                     }
-                }).catch(function (err) {
-                    console.error('Failed to send message to server:', err);
+                }).catch(error => {
+                    console.error('Failed to send message to server:', error);
                 });
             });
         });

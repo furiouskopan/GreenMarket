@@ -9,25 +9,31 @@
 <head>
     <link rel="stylesheet" href="~/css/styles.css" asp-append-version="true" />
 </head>
-<h2>Chat Room</h2>
-
-<button id="startNewChatButton" style="margin-bottom: 20px;">Start a New Chat</button>
-<input type="text" id="newChatUsername" placeholder="Enter username to chat" style="margin-bottom: 20px;" />
-
-@foreach (var session in Model.ChatSessions)
-{
-    <div class="chat-session" data-session-id="@session.Id">
-        <h3>Chat with @(session.User1Id == User.FindFirstValue(ClaimTypes.NameIdentifier) ? session.User2.UserName : session.User1.UserName)</h3>
-        <div id="messagesList_@session.Id" class="messages-list" style="height: 300px; overflow-y: scroll; border-bottom: 1px solid #ccc; margin-bottom: 10px;">
-            @foreach (var message in session.Messages)
-            {
-                <div><strong>@message.Sender.UserName:</strong> @message.Content</div>
-            }
-        </div>
-        <input type="text" class="messageInput" placeholder="Message" style="width: 100%; margin-bottom: 10px;" />
-        <button class="sendButton" style="width: 100%;" data-session-id="@session.Id">Send</button>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Chat Room</h2>
+        @foreach (var session in Model.ChatSessions)
+        {
+            <div class="card chat-session mb-3" data-session-id="@session.Id">
+                <div class="card-header">
+                    Chat with @(session.User1Id == User.FindFirstValue(ClaimTypes.NameIdentifier) ? session.User2.UserName : session.User1.UserName)
+                </div>
+                <div class="card-body">
+                    <div class="messages-list bg-light" style="height: 300px; overflow-y: auto; margin-bottom: 10px;">
+                        @foreach (var message in session.Messages)
+                        {
+                            <div class="p-2 border-bottom">
+                                <strong>@message.Sender.UserName:</strong> @message.Content
+                            </div>
+                        }
+                    </div>
+                    <input type="text" class="form-control messageInput" placeholder="Type your message here...">
+                    <button class="btn btn-primary sendButton mt-2" style="width: 100%;" data-session-id="@session.Id">Send</button>
+                </div>
+            </div>
+        }
     </div>
-}
+</body>
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.2/signalr.min.js"></script>
@@ -73,7 +79,6 @@
                     });
             }
         });
-
 
         document.querySelectorAll(".sendButton").forEach(button => {
             button.addEventListener("click", function (event) {

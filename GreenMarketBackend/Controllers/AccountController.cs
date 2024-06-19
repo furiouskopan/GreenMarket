@@ -60,6 +60,7 @@ namespace GreenMarketBackend.Controllers
                 user.LastName = model.LastName;
                 user.Address = model.Address;
                 user.PhoneNumber = model.PhoneNumber;
+                user.UserName = model.Username;
 
                 var result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)

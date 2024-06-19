@@ -43,35 +43,37 @@ namespace GreenMarketBackend.Controllers
             return View(viewModel);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> StartChatByUsername([FromBody] StartChatRequest model)
+        [HttpGet]
+        public async Task<IActionResult> StartChatWithUser(string userName)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var recipient = await _context.Users.FirstOrDefaultAsync(u => u.UserName == model.Username);
-            if (recipient == null)
+            var initiatorId = _userManager.GetUserId(User);
+            var targetUser = await _userManager.FindByNameAsync(userName);
+
+            if (targetUser == null)
             {
-                return BadRequest("Recipient not found.");
+                return NotFound();
             }
 
             var existingSession = await _context.ChatSessions
                 .FirstOrDefaultAsync(cs =>
-                    (cs.User1Id == userId && cs.User2Id == recipient.Id) ||
-                    (cs.User1Id == recipient.Id && cs.User2Id == userId));
+                    (cs.User1Id == initiatorId && cs.User2Id == targetUser.Id) ||
+                    (cs.User1Id == targetUser.Id && cs.User2Id == initiatorId));
 
             if (existingSession == null)
             {
-                var chatSession = new ChatSession
+                var newSession = new ChatSession
                 {
-                    User1Id = userId,
-                    User2Id = recipient.Id
+                    User1Id = initiatorId,
+                    User2Id = targetUser.Id
                 };
-                _context.ChatSessions.Add(chatSession);
+                _context.ChatSessions.Add(newSession);
                 await _context.SaveChangesAsync();
-                return Json(new { sessionId = chatSession.Id });
+                return RedirectToAction("Index", new { sessionId = newSession.Id });
             }
 
-            return Json(new { sessionId = existingSession.Id });
+            return RedirectToAction("Index", new { sessionId = existingSession.Id });
         }
+
 
         public class StartChatRequest
         {

@@ -1,6 +1,11 @@
 ﻿@model ContactFormModel
 
-<h2>Contact Ussss</h2>
+@{
+    ViewData["Title"] = "Contact";
+    Layout = "~/Views/Shared/_NavBar.cshtml";
+}
+
+<h2 class="mt-3">Contact Us</h2>
 
 @if (!string.IsNullOrEmpty(ViewBag.Message))
 {
@@ -8,28 +13,30 @@
         @ViewBag.Message
     </div>
 }
-
-<form asp-action="Index" method="post">
-    <div class="form-group">
-        <label asp-for="Name">Name:</label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="Email">Email:</label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="Message">Message:</label>
-        <textarea asp-for="Message" class="form-control" rows="4"></textarea>
-        <span asp-validation-for="Message" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <div class="form-check">
-            <input asp-for="Subscribe" class="form-check-input" />
-            <label class="form-check-label" asp-for="Subscribe">Subscribe to our weekly newsletter</label>
+<div class="m-3">
+    <form asp-action="Index" method="post">
+        <div class="mb-3 form-group">
+            <label asp-for="Name">Name:</label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
         </div>
-    </div>
-    <button type="submit" class="btn btn-primary">Send Message</button>
-</form>
+        <div class="mb-3 form-group">
+            <label asp-for="Email">Email:</label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="mb-3 form-group">
+            <label asp-for="Message">Message:</label>
+            <textarea asp-for="Message" class="form-control" rows="4"></textarea>
+            <span asp-validation-for="Message" class="text-danger"></span>
+        </div>
+        <div class="mb-3 form-group">
+            <div class="form-check">
+                <input asp-for="Subscribe" class="form-check-input" />
+                <label class="form-check-label" asp-for="Subscribe">Subscribe to our weekly newsletter</label>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Send Message</button>
+    </form>
+
+</div>

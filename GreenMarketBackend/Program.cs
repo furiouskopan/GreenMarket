@@ -34,6 +34,8 @@ builder.Services.AddSignalR();
 
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

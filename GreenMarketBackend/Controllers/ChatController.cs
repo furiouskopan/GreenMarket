@@ -116,48 +116,17 @@ namespace GreenMarketBackend.Controllers
             await _context.SaveChangesAsync();
 
             var recipientId = (chatSession.User1Id == userId) ? chatSession.User2Id : chatSession.User1Id;
-            await _hubContext.Clients.User(recipientId).SendAsync("ReceiveMessage", sender.UserName, model.Content);
+            await _hubContext.Clients.User(recipientId).SendAsync("ReceiveMessage", model.ChatSessionId, sender.UserName, model.Content);
 
             return Ok();
         }
 
-        [HttpGet]
-        public async Task<IActionResult> StartChatWithUser(string userName)
-        {
-            var initiatorId = _userManager.GetUserId(User);
-            var targetUser = await _userManager.FindByNameAsync(userName);
-
-            if (targetUser == null)
-            {
-                return NotFound();
-            }
-
-            var existingSession = await _context.ChatSessions
-                .FirstOrDefaultAsync(cs =>
-                    (cs.User1Id == initiatorId && cs.User2Id == targetUser.Id) ||
-                    (cs.User1Id == targetUser.Id && cs.User2Id == initiatorId));
-
-            if (existingSession == null)
-            {
-                var newSession = new ChatSession
-                {
-                    User1Id = initiatorId,
-                    User2Id = targetUser.Id
-                };
-                _context.ChatSessions.Add(newSession);
-                await _context.SaveChangesAsync();
-                return RedirectToAction("Index", new { sessionId = newSession.Id });
-            }
-
-            return RedirectToAction("Index", new { sessionId = existingSession.Id });
-        }
-
         [HttpPost]
-        public async Task<IActionResult> DeleteChatSession(int chatSessionId)
+        public async Task<IActionResult> DeleteChatSession([FromBody] DeleteChatSessionRequest request)
         {
             var chatSession = await _context.ChatSessions
                 .Include(cs => cs.Messages)
-                .FirstOrDefaultAsync(cs => cs.Id == chatSessionId);
+                .FirstOrDefaultAsync(cs => cs.Id == request.ChatSessionId);
 
             if (chatSession == null)
             {
@@ -169,6 +138,11 @@ namespace GreenMarketBackend.Controllers
             await _context.SaveChangesAsync();
 
             return Ok();
+        }
+
+        public class DeleteChatSessionRequest
+        {
+            public int ChatSessionId { get; set; }
         }
     }
 }

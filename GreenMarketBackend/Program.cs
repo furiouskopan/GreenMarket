@@ -36,6 +36,9 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
 
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+builder.Services.AddTransient<EmailService>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

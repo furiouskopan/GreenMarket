@@ -5,6 +5,15 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GreenMarketBackend.Models
 {
+    public enum OrderStatus
+    {
+        Pending,
+        Processing,
+        Shipped,
+        Delivered,
+        Completed,
+        Cancelled
+    }
     public class Order
     {
         [Key]
@@ -28,17 +37,9 @@ namespace GreenMarketBackend.Models
         [Required]
         public string PaymentMethod { get; set; }
 
-        public enum OrderStatus
-        {
-            Pending,
-            Processing,
-            Shipped,
-            Delivered,
-            Completed,
-            Cancelled
-        }
+        [Required]
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
-        // Navigation property for order items
         public virtual ICollection<OrderItem> OrderItems { get; set; }
     }
 }

@@ -5,13 +5,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using GreenMarketBackend.Data;
 using GreenMarketBackend.Models;
-using GreenMarketBackend.ViewModels;
+using GreenMarketBackend.Models.ViewModels;
 using System;
 using MailKit.Net.Smtp;
 using MimeKit;
 using GreenMarketBackend.Models.ViewModels.CartViewModels;
 using GreenMarketBackend.Models.ViewModels.OrderViewModels;
-using GreenMarketBackend.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using static GreenMarketBackend.Models.Order;
 
@@ -164,19 +163,85 @@ public class CheckoutController : Controller
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("Your Store", "no-reply@yourstore.com"));
         message.To.Add(new MailboxAddress(user.UserName, email));
-        message.Subject = "Order Confirmation";
+        message.Subject = "Order Confirmation - Order #" + order.OrderId;
 
-        message.Body = new TextPart("plain")
-        {
-            Text = $"Thank you for your order! Your order ID is {order.OrderId}."
-        };
+        // Create the HTML body of the email
+        var bodyBuilder = new BodyBuilder();
+        bodyBuilder.HtmlBody = $@"
+        <h1>Thank you for your order!</h1>
+        <p>Hi {user.UserName},</p>
+        <p>We have received your order and it is currently being processed. Here are your order details:</p>
+        <h2>Order #{order.OrderId}</h2>
+        <p><strong>Order Date:</strong> {order.OrderDate.ToString("f")}</p>
+        <p><strong>Total Amount:</strong> {order.TotalAmount.ToString("C")}</p>
+        <p><strong>Shipping Address:</strong> {order.ShippingAddress}</p>
+        <p><strong>Payment Method:</strong> {order.PaymentMethod}</p>
+        <h3>Order Items</h3>
+        <table border='1' cellpadding='5' cellspacing='0' width='100%'>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {string.Join("", order.OrderItems.Select(item => $@"
+                    <tr>
+                        <td>{item.Product.Name}</td>
+                        <td>{item.Quantity}</td>
+                        <td>{item.PriceAtTimeOfPurchase.ToString("C")}</td>
+                        <td>{(item.Quantity * item.PriceAtTimeOfPurchase).ToString("C")}</td>
+                    </tr>"))}
+            </tbody>
+        </table>
+        <p>If you have any questions, please contact our support team.</p>
+        <p>Best regards,<br>Your Store Team</p>";
 
-        using (var client = new SmtpClient())
+        // Create the plain text body as a fallback
+        bodyBuilder.TextBody = $@"
+        Thank you for your order!
+
+        Hi {user.UserName},
+
+        We have received your order and it is currently being processed. Here are your order details:
+
+        Order #{order.OrderId}
+        Order Date: {order.OrderDate.ToString("f")}
+        Total Amount: {order.TotalAmount.ToString("C")}
+        Shipping Address: {order.ShippingAddress}
+        Payment Method: {order.PaymentMethod}
+
+        Order Items:
+        {string.Join("\n", order.OrderItems.Select(item => $@"
+            Product: {item.Product.Name}
+            Quantity: {item.Quantity}
+            Price: {item.PriceAtTimeOfPurchase.ToString("C")}
+            Total: {(item.Quantity * item.PriceAtTimeOfPurchase).ToString("C")}
+        "))}
+
+        If you have any questions, please contact our support team.
+
+        Best regards,
+        Your Store Team";
+
+        message.Body = bodyBuilder.ToMessageBody();
+
+        try
         {
-            await client.ConnectAsync("smtp.your-email-provider.com", 587, false);
-            await client.AuthenticateAsync("your-email", "your-email-password");
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
+            using (var client = new SmtpClient())
+            {
+                await client.ConnectAsync("smtp.gmail.com", 587, false);
+                await client.AuthenticateAsync("packaras@gmail.com", "cukz kzii ghua tboj");
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log the error (consider using a logging framework like Serilog)
+            Console.WriteLine("Failed to send email: " + ex.Message);
         }
     }
 }

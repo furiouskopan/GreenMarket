@@ -28,6 +28,15 @@ namespace GreenMarketBackend.Models
         [Required]
         public string PaymentMethod { get; set; }
 
+        public enum OrderStatus
+        {
+            Pending,
+            Processing,
+            Shipped,
+            Delivered,
+            Completed,
+            Cancelled
+        }
 
         // Navigation property for order items
         public virtual ICollection<OrderItem> OrderItems { get; set; }

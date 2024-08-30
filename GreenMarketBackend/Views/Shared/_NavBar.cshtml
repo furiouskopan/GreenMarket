@@ -21,7 +21,7 @@
                     @if (User.Identity.IsAuthenticated)
                     {
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Account" asp-action="Index">Account</a>
+                            <a class="nav-link" asp-controller="Account" asp-action="Index" style="text-decoration: none ">Account</a>
                         </li>
                     }
                     else
@@ -39,7 +39,7 @@
                         {
                         <li class="nav-item">
                             <form method="post" asp-controller="Account" asp-action="Logout">
-                                <button type="submit" class="nav-link btn btn-link">Logout</button>
+                                <button type="submit" class="nav-link btn btn-link" style="text-decoration: none ">Logout</button>
                             </form>
                         </li>
                         }

@@ -30,6 +30,14 @@ namespace GreenMarketBackend.Controllers
         {
             if (ModelState.IsValid)
             {
+                // Check if the email already exists
+                var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                if (existingUser != null)
+                {
+                    ModelState.AddModelError(string.Empty, "An account with this email already exists.");
+                    return View(model);
+                }
+
                 var user = new ApplicationUser
                 {
                     UserName = model.Username,
@@ -38,9 +46,9 @@ namespace GreenMarketBackend.Controllers
                     PhoneNumber = model.PhoneNumber,
                     FirstName = model.FirstName,
                     LastName = model.LastName,
-                    RegistrationDate = DateTime.Now,
-                    LockoutEnabled = false
+                    RegistrationDate = DateTime.Now
                 };
+
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {

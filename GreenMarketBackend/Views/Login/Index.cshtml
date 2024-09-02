@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = "Login";
     Layout = null;
-}   
+}
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -16,6 +16,7 @@
     <div class="card shadow-sm w-100" style="max-width: 400px;">
         <div class="card-body">
             <h3 class="card-title text-center mb-4">Login to Green Market</h3>
+
             <form method="post" asp-action="Index">
                 <div class="mb-3">
                     <label for="inputEmail" class="form-label">Email Address</label>
@@ -24,7 +25,18 @@
                 <div class="mb-3">
                     <label for="inputPassword" class="form-label">Password</label>
                     <input type="password" class="form-control" id="inputPassword" name="Password" autocomplete="current-password" required>
-                </div>
+                </div>    
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger">
+                        <ul>
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <p>@error.ErrorMessage</p>
+                            }
+                        </ul>
+                    </div>
+                }
                 <div class="mb-3">
                     <a href='@Url.Action("ForgotPassword", "Login")'>Forgot your password?</a>
                 </div>

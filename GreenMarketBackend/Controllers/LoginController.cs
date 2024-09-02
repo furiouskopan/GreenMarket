@@ -28,7 +28,6 @@ namespace GreenMarketBackend.Controllers
             var model = new LoginViewModel();
             return View(model);
         }
-
         [HttpPost]
         public async Task<IActionResult> Index(LoginViewModel model, string returnUrl = null)
         {
@@ -51,9 +50,7 @@ namespace GreenMarketBackend.Controllers
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null)
             {
-                // Log the error to track the issue
-                Console.WriteLine($"Login failed: No user found with email {model.Email}");
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                ModelState.AddModelError(string.Empty, "Email not found.");
                 return View(model);
             }
 
@@ -62,8 +59,15 @@ namespace GreenMarketBackend.Controllers
             if (result.Succeeded)
             {
                 // Successful login
-                Console.WriteLine($"Login succeeded for user {user.UserName}");
                 return LocalRedirect(returnUrl);
+            }
+            else if (result.IsLockedOut)
+            {
+                ModelState.AddModelError(string.Empty, "Account is locked. Please try again later.");
+            }
+            else
+            {
+                ModelState.AddModelError(string.Empty, "Incorrect password.");
             }
             //else if (result.IsLockedOut)
             //{

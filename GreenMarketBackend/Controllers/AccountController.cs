@@ -130,7 +130,6 @@ namespace GreenMarketBackend.Controllers
                 ModelState.AddModelError(string.Empty, "Invalid password reset token.");
                 return View();
             }
-
             var model = new ResetPasswordViewModel
             {
                 Token = token,

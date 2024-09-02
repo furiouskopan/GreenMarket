@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="Views\Account\PasswordResetConfirmation.cshtml" />
+    <Content Remove="Views\Account\ResetPasswordConfirmation.cshtml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,15 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <UpToDateCheckInput Remove="Views\Account\PasswordResetConfirmation.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="Views\Account\PasswordResetConfirmation.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Views\Account\PasswordResetConfirmation.cshtml" />
+    <None Include="Views\Account\ResetPasswordConfirmation.cshtml" />
   </ItemGroup>
 
 </Project>

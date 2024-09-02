@@ -123,20 +123,9 @@ namespace GreenMarketBackend.Controllers
         }
 
         [HttpGet]
-        public IActionResult ResetPassword(string token, string email)
+        public IActionResult ResetPassword()
         {
-            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
-            {
-                ModelState.AddModelError(string.Empty, "Invalid password reset token.");
-                return View();
-            }
-            var model = new ResetPasswordViewModel
-            {
-                Token = token,
-                Email = email
-            };
-
-            return View(model);
+            return View();
         }
 
         [HttpPost]
@@ -145,14 +134,12 @@ namespace GreenMarketBackend.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                // No user found, but we don't disclose that to the user
-                return RedirectToAction("ResetPasswordConfirmation");
-            }
+            // Fetch the user from the database using the UserManager
+            var user = await _userManager.GetUserAsync(User);
 
-            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.Password);
+            // Check if the provided current password is correct
+            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+
             if (result.Succeeded)
             {
                 return RedirectToAction("ResetPasswordConfirmation");

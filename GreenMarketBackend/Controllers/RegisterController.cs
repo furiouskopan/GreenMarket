@@ -38,7 +38,8 @@ namespace GreenMarketBackend.Controllers
                     PhoneNumber = model.PhoneNumber,
                     FirstName = model.FirstName,
                     LastName = model.LastName,
-                    RegistrationDate = DateTime.Now
+                    RegistrationDate = DateTime.Now,
+                    LockoutEnabled = false
                 };
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)

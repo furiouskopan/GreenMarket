@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using GreenMarketBackend.Models;
 using System.Security.Claims;
 using GreenMarketBackend.Models.ViewModels.AccountViewModels;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 
 namespace GreenMarketBackend.Controllers
 {
@@ -12,11 +13,13 @@ namespace GreenMarketBackend.Controllers
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly EmailService _emailService;
 
-        public LoginController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
+        public LoginController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, EmailService emailService)
         {
             _signInManager = signInManager;
             _userManager = userManager;
+            _emailService = emailService;   
         }
 
         [HttpGet]
@@ -29,21 +32,67 @@ namespace GreenMarketBackend.Controllers
         [HttpPost]
         public async Task<IActionResult> Index(LoginViewModel model, string returnUrl = null)
         {
-            returnUrl ??= Url.Content("~/"); // If returnUrl is null, redirect to the home page
+            returnUrl ??= Url.Content("~/");
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
-                if (result.Succeeded)
+                // Log invalid model state to see what went wrong
+                foreach (var state in ModelState)
                 {
-                    return LocalRedirect(returnUrl);
+                    foreach (var error in state.Value.Errors)
+                    {
+                        Console.WriteLine($"ModelState Error: Key = {state.Key}, Error = {error.ErrorMessage}");
+                    }
                 }
+                return View(model);
+            }
+
+            // Check if the user exists
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                // Log the error to track the issue
+                Console.WriteLine($"Login failed: No user found with email {model.Email}");
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                 return View(model);
             }
 
+            // Try signing in the user
+            var result = await _signInManager.PasswordSignInAsync(user.UserName, model.Password, model.RememberMe, lockoutOnFailure: false);
+            if (result.Succeeded)
+            {
+                // Successful login
+                Console.WriteLine($"Login succeeded for user {user.UserName}");
+                return LocalRedirect(returnUrl);
+            }
+            //else if (result.IsLockedOut)
+            //{
+            //    // Log if account is locked out
+            //    Console.WriteLine($"Login failed: User {user.UserName} is locked out.");
+            //    ModelState.AddModelError(string.Empty, "Account is locked out.");
+            //}
+            //else if (result.IsNotAllowed)
+            //{
+            //    // Log if login is not allowed
+            //    Console.WriteLine($"Login failed: User {user.UserName} is not allowed to log in.");
+            //    ModelState.AddModelError(string.Empty, "You are not allowed to log in.");
+            //}
+            //else if (result.RequiresTwoFactor)
+            //{
+            //    // Log if two-factor authentication is required
+            //    Console.WriteLine($"Login failed: Two-factor authentication required for user {user.UserName}.");
+            //    return RedirectToAction(nameof(TwoFactorAuthentication));
+            //}
+            //else
+            //{
+            //    // Log general failure
+            //    Console.WriteLine($"Login failed: Invalid login attempt for user {user.UserName}.");
+            //    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            //}
+
             return View(model);
         }
+
 
         [HttpGet]
         public IActionResult ExternalLogin(string provider, string returnUrl = null)
@@ -138,6 +187,33 @@ namespace GreenMarketBackend.Controllers
 
             ViewData["ReturnUrl"] = returnUrl;
             return View(nameof(ExternalLogin), model);
+        }
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                // Prevent revealing user existence
+                return RedirectToAction("ForgotPasswordConfirmation");
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var callbackUrl = Url.Action("ResetPassword", "Account", new { token, email = model.Email }, Request.Scheme);
+
+            await _emailService.SendEmailAsync(model.Email, "Reset Password",
+                $"Please reset your password by <a href='{callbackUrl}'>clicking here</a>.");
+
+            return RedirectToAction("ForgotPasswordConfirmation");
         }
     }
 }

@@ -94,12 +94,14 @@ namespace GreenMarketBackend.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult ForgotPassword()
         {
             return View();
         }
 
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
         {
@@ -109,7 +111,6 @@ namespace GreenMarketBackend.Controllers
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null)
             {
-                // Prevent revealing user existence
                 return RedirectToAction("ForgotPasswordConfirmation");
             }
 
@@ -152,6 +153,7 @@ namespace GreenMarketBackend.Controllers
             return View(model);
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult ForgotPasswordConfirmation()
         {

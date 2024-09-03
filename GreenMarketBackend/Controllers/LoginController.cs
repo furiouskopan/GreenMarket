@@ -192,32 +192,32 @@ namespace GreenMarketBackend.Controllers
             ViewData["ReturnUrl"] = returnUrl;
             return View(nameof(ExternalLogin), model);
         }
-        [HttpGet]
-        public IActionResult ForgotPassword()
-        {
-            return View();
-        }
+        //[HttpGet]
+        //public IActionResult ForgotPassword()
+        //{
+        //    return View();
+        //}
 
-        [HttpPost]
-        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
-        {
-            if (!ModelState.IsValid)
-                return View(model);
+        //[HttpPost]
+        //public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        //{
+        //    if (!ModelState.IsValid)
+        //        return View(model);
 
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                // Prevent revealing user existence
-                return RedirectToAction("ForgotPasswordConfirmation");
-            }
+        //    var user = await _userManager.FindByEmailAsync(model.Email);
+        //    if (user == null)
+        //    {
+        //        // Prevent revealing user existence
+        //        return RedirectToAction("ForgotPasswordConfirmation");
+        //    }
 
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var callbackUrl = Url.Action("ResetPassword", "Account", new { token, email = model.Email }, Request.Scheme);
+        //    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        //    var callbackUrl = Url.Action("ResetPassword", "Account", new { token, email = model.Email }, Request.Scheme);
 
-            await _emailService.SendEmailAsync(model.Email, "Reset Password",
-                $"Please reset your password by <a href='{callbackUrl}'>clicking here</a>.");
+        //    await _emailService.SendEmailAsync(model.Email, "Reset Password",
+        //        $"Please reset your password by <a href='{callbackUrl}'>clicking here</a>.");
 
-            return RedirectToAction("ForgotPasswordConfirmation");
-        }
+        //    return RedirectToAction("ForgotPasswordConfirmation");
+        //}
     }
 }

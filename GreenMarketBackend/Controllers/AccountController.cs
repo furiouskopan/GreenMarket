@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using GreenMarketBackend.Models.ViewModels.AccountViewModels;
+using System.Net;
+using System.Text.Encodings.Web;
 
 namespace GreenMarketBackend.Controllers
 {
@@ -115,20 +117,26 @@ namespace GreenMarketBackend.Controllers
             }
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var callbackUrl = Url.Action("ResetPassword", "Account", new { token, email = model.Email }, Request.Scheme);
+            var callbackUrl = Url.Action("ResetPassword", "Account", new
+            {   
+                token = WebUtility.UrlEncode(token),
+                email = WebUtility.UrlEncode(model.Email)
+            }, protocol: Request.Scheme);
+
 
             await _emailService.SendEmailAsync(model.Email, "Reset Password",
-                $"Please reset your password by <a href='{callbackUrl}'>clicking here</a>.");
+                $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
             return RedirectToAction("ForgotPasswordConfirmation");
         }
-
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult ResetPassword()
         {
             return View();
         }
 
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
         {

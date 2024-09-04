@@ -5,13 +5,8 @@
     Layout = "_NavBar";
     var sortOrder = Context.Request.Query["sortOrder"];
 }
-<!DOCTYPE html>
-<html lang="en">
-
-
 
 <body>
-    <!-- Main Content -->
     <div class="container my-5" id="products">
         <h2 class="text-center mb-4">Our Products</h2>
 
@@ -21,9 +16,12 @@
                 <div class="col-md-6">
                     <input type="text" name="search" class="form-control" placeholder="Search products by name..." value="@Context.Request.Query["search"]">
                 </div>
+
+                <!-- Parent Category Dropdown (aligned horizontally) -->
                 <div class="col-md-3">
-                    <select name="parentCategoryId" class="form-select" onchange="this.form.submit()">
-                        <option value="">Select Parent Category</option>
+                    <label for="parentCategory">Select Parent Category:</label>
+                    <select name="parentCategoryId" class="form-select" id="parentCategory" onchange="this.form.submit()">
+                        <option value="">All</option> <!-- 'All' Option -->
                         @foreach (var parentCategory in Model.ParentCategories)
                         {
                             if (Model.SelectedParentCategoryId == parentCategory.CategoryId)
@@ -37,9 +35,12 @@
                         }
                     </select>
                 </div>
+
+                <!-- Child Category Dropdown (aligned horizontally) -->
                 <div class="col-md-3">
-                    <select name="childCategoryId" class="form-select" onchange="this.form.submit()">
-                        <option value="">Select Child Category</option>
+                    <label for="childCategory">Select Child Category:</label>
+                    <select name="childCategoryId" class="form-select" id="childCategory" onchange="this.form.submit()">
+                        <option value="">All</option> <!-- 'All' Option -->
                         @foreach (var childCategory in Model.ChildCategories)
                         {
                             if (Model.SelectedChildCategoryId == childCategory.CategoryId)
@@ -54,9 +55,12 @@
                     </select>
                 </div>
             </div>
-            <div class="row mb-4">
-                <div class="col-md-3 offset-md-9">
-                    <select name="sortOrder" class="form-select" onchange="this.form.submit()">
+
+            <!-- Sort Order Dropdown (under child category) -->
+            <div class="row mb-4 justify-content-end">
+                <div class="col-md-3">
+                    <label for="sortOrder">Sort by:</label>
+                    <select name="sortOrder" class="form-select" id="sortOrder" onchange="this.form.submit()">
                         @if (sortOrder == "asc")
                         {
                             <option value="asc" selected>Price: Low to High</option>
@@ -73,10 +77,10 @@
                             <option value="desc">Price: High to Low</option>
                         }
                     </select>
-
                 </div>
             </div>
-        </form>
+        </form> 
+
         <!-- Products Listing -->
         <div id="productList" class="row g-4">
             @foreach (var product in Model.Products)
@@ -102,7 +106,6 @@
             }
         </div>
     </div>
-    
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
             integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
@@ -162,5 +165,3 @@
     </script> *@
 
 </body>
-
-</html>

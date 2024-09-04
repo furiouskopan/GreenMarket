@@ -27,11 +27,17 @@ namespace GreenMarketBackend.Controllers
         }
 
         // Displays a list of products with optional filtering by category and sorting
-        public async Task<IActionResult> Index(int? parentCategoryId, int? childCategoryId, string sortOrder)
+        public async Task<IActionResult> Index(int? parentCategoryId, int? childCategoryId, string sortOrder, string search)
         {
             var parentCategories = await _context.Categories.Where(c => c.ParentCategoryId == null).ToListAsync();
             var childCategories = Enumerable.Empty<Category>();
             IQueryable<Product> productsQuery = _context.Products.Include(p => p.Category);
+
+            // Apply search filter
+            if (!string.IsNullOrEmpty(search))
+            {
+                productsQuery = productsQuery.Where(p => p.Name.Contains(search));
+            }
 
             if (childCategoryId.HasValue)
             {
@@ -58,7 +64,8 @@ namespace GreenMarketBackend.Controllers
                 ChildCategories = childCategories,
                 Products = products,
                 SelectedParentCategoryId = parentCategoryId,
-                SelectedChildCategoryId = childCategoryId
+                SelectedChildCategoryId = childCategoryId,
+                Search = search
             };
 
             return View(viewModel);

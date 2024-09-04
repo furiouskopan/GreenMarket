@@ -7,5 +7,6 @@
         public IEnumerable<Product> Products { get; set; }
         public int? SelectedParentCategoryId { get; set; }
         public int? SelectedChildCategoryId { get; set; }
+        public string Search { get; set; }
     }
 }

@@ -12,9 +12,9 @@
 
         <!-- Filter and Search Form -->
         <form method="get" asp-action="Index">
-            <div class="row mb-4">
+            <div class="row mb-3">
                 <div class="col-md-6">
-                    <input type="text" name="search" class="form-control" placeholder="Search products by name..." value="@Context.Request.Query["search"]">
+                    <input type="text" name="search" class="form-control" style="margin-top: 0.9rem" placeholder="Search products by name..." value="@Context.Request.Query["search"]">
                 </div>
 
                 <!-- Parent Category Dropdown (aligned horizontally) -->

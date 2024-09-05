@@ -154,7 +154,6 @@ public class CheckoutController : Controller
 
         return View(viewModel);
     }
-
     private async Task SendOrderConfirmationEmail(Order order)
     {
         var user = await _userManager.FindByIdAsync(order.UserId);
@@ -166,14 +165,15 @@ public class CheckoutController : Controller
         message.Subject = "Order Confirmation - Order #" + order.OrderId;
 
         // Create the HTML body of the email
-        var bodyBuilder = new BodyBuilder();
-        bodyBuilder.HtmlBody = $@"
+        var bodyBuilder = new BodyBuilder
+        {
+            HtmlBody = $@"
         <h1>Thank you for your order!</h1>
         <p>Hi {user.UserName},</p>
         <p>We have received your order and it is currently being processed. Here are your order details:</p>
         <h2>Order #{order.OrderId}</h2>
-        <p><strong>Order Date:</strong> {order.OrderDate.ToString("f")}</p>
-        <p><strong>Total Amount:</strong> {order.TotalAmount.ToString("C")}</p>
+        <p><strong>Order Date:</strong> {order.OrderDate:f}</p>
+        <p><strong>Total Amount:</strong> {order.TotalAmount:C}</p>
         <p><strong>Shipping Address:</strong> {order.ShippingAddress}</p>
         <p><strong>Payment Method:</strong> {order.PaymentMethod}</p>
         <h3>Order Items</h3>
@@ -191,57 +191,128 @@ public class CheckoutController : Controller
                     <tr>
                         <td>{item.Product.Name}</td>
                         <td>{item.Quantity}</td>
-                        <td>{item.PriceAtTimeOfPurchase.ToString("C")}</td>
-                        <td>{(item.Quantity * item.PriceAtTimeOfPurchase).ToString("C")}</td>
+                        <td>{item.PriceAtTimeOfPurchase:C}</td>
+                        <td>{item.Quantity * item.PriceAtTimeOfPurchase:C}</td>
                     </tr>"))}
             </tbody>
         </table>
         <p>If you have any questions, please contact our support team.</p>
-        <p>Best regards,<br>Your Store Team</p>";
+        <p>Best regards,<br>Your Store Team</p>"
+        };
 
         // Create the plain text body as a fallback
         bodyBuilder.TextBody = $@"
-        Thank you for your order!
+    Thank you for your order!
 
-        Hi {user.UserName},
+    Hi {user.UserName},
 
-        We have received your order and it is currently being processed. Here are your order details:
+    We have received your order and it is currently being processed. Here are your order details:
 
-        Order #{order.OrderId}
-        Order Date: {order.OrderDate.ToString("f")}
-        Total Amount: {order.TotalAmount.ToString("C")}
-        Shipping Address: {order.ShippingAddress}
-        Payment Method: {order.PaymentMethod}
+    Order #{order.OrderId}
+    Order Date: {order.OrderDate:f}
+    Total Amount: {order.TotalAmount:C}
+    Shipping Address: {order.ShippingAddress}
+    Payment Method: {order.PaymentMethod}
 
-        Order Items:
-        {string.Join("\n", order.OrderItems.Select(item => $@"
-            Product: {item.Product.Name}
-            Quantity: {item.Quantity}
-            Price: {item.PriceAtTimeOfPurchase.ToString("C")}
-            Total: {(item.Quantity * item.PriceAtTimeOfPurchase).ToString("C")}
-        "))}
+    Order Items:
+    {string.Join("\n", order.OrderItems.Select(item => $@"
+        Product: {item.Product.Name}
+        Quantity: {item.Quantity}
+        Price: {item.PriceAtTimeOfPurchase:C}
+        Total: {(item.Quantity * item.PriceAtTimeOfPurchase):C}
+    "))}
 
-        If you have any questions, please contact our support team.
+    If you have any questions, please contact our support team.
 
-        Best regards,
-        Your Store Team";
+    Best regards,
+    Your Store Team";
 
         message.Body = bodyBuilder.ToMessageBody();
 
+        await SendEmailAsync(message);
+    }
+
+    private async Task SendSellerNotificationEmails(Order order)
+    {
+        foreach (var sellerGroup in order.OrderItems.GroupBy(oi => oi.Product.CreatedByUser))
+        {
+            var seller = sellerGroup.Key;
+            var sellerEmail = seller.Email;
+            var items = sellerGroup.ToList();
+
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Green Market", "no-reply@greenmarket.com"));
+            message.To.Add(new MailboxAddress(seller.UserName, sellerEmail));
+            message.Subject = $"New Order - Items Sold in Order #{order.OrderId}";
+
+            // HTML Body for email
+            var bodyBuilder = new BodyBuilder
+            {
+                HtmlBody = $@"
+            <h1>New Order: #{order.OrderId}</h1>
+            <p>Hi {seller.UserName},</p>
+            <p>You have sold the following items:</p>
+            <table border='1'>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {string.Join("", items.Select(item => $@"
+                    <tr>
+                        <td>{item.Product.Name}</td>
+                        <td>{item.Quantity}</td>
+                        <td>{item.PriceAtTimeOfPurchase:C}</td>
+                        <td>{item.Quantity * item.PriceAtTimeOfPurchase:C}</td>
+                    </tr>"))}
+                </tbody>
+            </table>
+            <p>Please arrange the delivery of these items with the buyer.</p>"
+            };
+
+            bodyBuilder.TextBody = $@"
+        New Order: #{order.OrderId}
+        Hi {seller.UserName},
+
+        You have sold the following items:
+
+        {string.Join("\n", items.Select(item => $@"
+            Product: {item.Product.Name}
+            Quantity: {item.Quantity}
+            Price: {item.PriceAtTimeOfPurchase:C}
+            Total: {item.Quantity * item.PriceAtTimeOfPurchase:C}
+        "))}
+
+        Please arrange the delivery of these items with the buyer.";
+
+            message.Body = bodyBuilder.ToMessageBody();
+
+            await SendEmailAsync(message);
+        }
+    }
+
+    // This is the common method to send email
+    private async Task SendEmailAsync(MimeMessage message)
+    {
         try
         {
             using (var client = new SmtpClient())
             {
                 await client.ConnectAsync("smtp.gmail.com", 587, false);
-                await client.AuthenticateAsync("packaras@gmail.com", "cukz kzii ghua tboj");
+                await client.AuthenticateAsync(Environment.GetEnvironmentVariable("SMTP_USER"), Environment.GetEnvironmentVariable("SMTP_PASS"));
                 await client.SendAsync(message);
                 await client.DisconnectAsync(true);
             }
         }
         catch (Exception ex)
         {
-            // Log the error (consider using a logging framework like Serilog)
-            Console.WriteLine("Failed to send email: " + ex.Message);
+            // Log the error
+            Console.WriteLine($"Failed to send email: {ex.Message}");
+            // Consider logging with a proper logging framework here
         }
     }
 }

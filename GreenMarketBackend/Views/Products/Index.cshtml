@@ -5,7 +5,11 @@
     Layout = "_NavBar";
     var sortOrder = Context.Request.Query["sortOrder"];
 }
-
+<div class="row">
+    <div class="col text-end mt-4 me-3">
+        <a href="@Url.Action("MyProducts", "Products")" style="text-decoration:none; color:green">My Products</a>
+    </div>
+</div>
 <body>
     <div class="container my-5" id="products">
         <h2 class="text-center mb-4">Our Products</h2>

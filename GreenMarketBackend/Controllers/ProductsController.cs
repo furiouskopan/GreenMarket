@@ -100,7 +100,8 @@ namespace GreenMarketBackend.Controllers
                     CreatedDate = DateTime.UtcNow,
                     HarvestDate = model.HarvestDate,
                     CreatedByUserId = user.Id,
-                    CategoryId = model.CategoryId
+                    CategoryId = model.CategoryId,
+                    IsAvailable = true
                 };
 
                 _context.Add(product);
@@ -162,31 +163,39 @@ namespace GreenMarketBackend.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
+            Console.WriteLine($"Received product ID for deletion: {id}"); // Logging the received ID
+
             var product = await _context.Products.FindAsync(id);
+
             if (product == null)
             {
-                return NotFound();
+                Console.WriteLine($"Product with ID: {id} not found."); // Log when product is not found
+                return Json(new { success = false, message = "Product not found." });
             }
 
-            // Check if the product exists in any cart
             var isInCarts = _context.CartItems.Any(ci => ci.ProductId == id);
 
             if (isInCarts)
             {
-                // If in a cart, mark the product as unavailable
                 product.IsAvailable = false;
                 _context.Products.Update(product);
             }
             else
             {
-                // If not in any cart, delete the product
                 _context.Products.Remove(product);
             }
 
-            await _context.SaveChangesAsync();
-            return Ok(); // Return success for AJAX call
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error occurred while saving changes: {ex.Message}"); // Log any errors during save
+                return Json(new { success = false, message = "An error occurred while saving changes." });
+            }
         }
-
 
         // Displays the details of a specific product, including reviews
         // GET: Products/Details/5

@@ -39,7 +39,8 @@ namespace GreenMarketBackend.Controllers
                     CartItemId = ci.CartItemId,
                     ProductName = ci.Product.Name,
                     Price = ci.Product.Price,
-                    Quantity = ci.Quantity
+                    Quantity = ci.Quantity,
+                    IsAvailable = ci.Product.IsAvailable
                 }).ToList(),
                 TotalAmount = cart.CartItems.Sum(ci => ci.Quantity * ci.Product.Price)
             };

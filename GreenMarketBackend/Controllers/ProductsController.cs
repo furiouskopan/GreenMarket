@@ -163,13 +163,28 @@ namespace GreenMarketBackend.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var product = await _context.Products.FindAsync(id);
-            if (product != null)
+            if (product == null)
             {
-                _context.Products.Remove(product);
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
 
-            return Ok(); // Return a success response to the AJAX call
+            // Check if the product exists in any cart
+            var isInCarts = _context.CartItems.Any(ci => ci.ProductId == id);
+
+            if (isInCarts)
+            {
+                // If in a cart, mark the product as unavailable
+                product.IsAvailable = false;
+                _context.Products.Update(product);
+            }
+            else
+            {
+                // If not in any cart, delete the product
+                _context.Products.Remove(product);
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(); // Return success for AJAX call
         }
 
 

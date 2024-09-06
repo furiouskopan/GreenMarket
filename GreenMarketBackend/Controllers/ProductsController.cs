@@ -131,33 +131,47 @@ namespace GreenMarketBackend.Controllers
             return uniqueFileName;
         }
 
-        // Displays the delete confirmation page
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+        //// Displays the delete confirmation page
+        //public async Task<IActionResult> Delete(int? id)
+        //{
+        //    if (id == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            var product = await _context.Products.FirstOrDefaultAsync(m => m.ProductId == id);
-            if (product == null)
-            {
-                return NotFound();
-            }
+        //    var product = await _context.Products.FirstOrDefaultAsync(m => m.ProductId == id);
+        //    if (product == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            return View(product);
-        }
+        //    return View(product);
+        //}
 
-        // Handles the POST request to delete a product
-        [HttpPost, ActionName("Delete")]
+        //// Handles the POST request to delete a product
+        //[HttpPost, ActionName("Delete")]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> DeleteConfirmed(int id)
+        //{
+        //    var product = await _context.Products.FindAsync(id);
+        //    _context.Products.Remove(product);
+        //    await _context.SaveChangesAsync();
+        //    return RedirectToAction(nameof(Index));
+        //}
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             var product = await _context.Products.FindAsync(id);
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            if (product != null)
+            {
+                _context.Products.Remove(product);
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(); // Return a success response to the AJAX call
         }
+
 
         // Displays the details of a specific product, including reviews
         // GET: Products/Details/5

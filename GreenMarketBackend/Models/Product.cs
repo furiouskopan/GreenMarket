@@ -30,6 +30,8 @@ namespace GreenMarketBackend.Models
         [Required]
         public string Origin { get; set; }
 
+        public bool IsAvailable { get; set; }
+
         [Required]
         public DateTime CreatedDate { get; set; }
 

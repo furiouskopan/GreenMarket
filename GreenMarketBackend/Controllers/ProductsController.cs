@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using System;
 using System.IO;
 using GreenMarketBackend.Models.ViewModels.ProductViewModels;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GreenMarketBackend.Controllers
 {
@@ -196,6 +197,26 @@ namespace GreenMarketBackend.Controllers
                 return Json(new { success = false, message = "An error occurred while saving changes." });
             }
         }
+
+        [Authorize(Roles = "Admin")]  // Only admin can access this action
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AdminDelete(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+
+            if (product == null)
+            {
+                return Json(new { success = false, message = "Product not found." });
+            }
+
+            // Hard delete directly for admin, even if the product is in any cart
+            _context.Products.Remove(product);
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+
 
         // Displays the details of a specific product, including reviews
         // GET: Products/Details/5

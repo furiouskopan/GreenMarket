@@ -43,6 +43,7 @@ namespace GreenMarketBackend.Models
 
         //Navigation property to represent the user who created the product
         public virtual ApplicationUser CreatedByUser { get; set; }
+        public DateTime? DeletedAt { get; set; }
 
         [ForeignKey("Category")]
         public int CategoryId { get; set; }

@@ -5,8 +5,10 @@ namespace GreenMarketBackend.Models.ViewModels.AccountViewModels
     public class ResetPasswordViewModel
     {
         [Required]
-        [DataType(DataType.Password)]
-        public string CurrentPassword { get; set; }
+        public string Email { get; set; }
+
+        [Required]
+        public string Token { get; set; }
 
         [Required]
         [DataType(DataType.Password)]

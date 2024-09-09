@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using GreenMarketBackend.Models.ViewModels.AccountViewModels;
 using System.Net;
 using System.Text.Encodings.Web;
+using System.Web;
 
 namespace GreenMarketBackend.Controllers
 {
@@ -142,7 +143,7 @@ namespace GreenMarketBackend.Controllers
             var callbackUrl = Url.Action("ResetPassword", "Account", new
             {   
                 token = WebUtility.UrlEncode(token),
-                email = WebUtility.UrlEncode(model.Email)
+                email = HttpUtility.UrlDecode(model.Email)
             }, protocol: Request.Scheme);
 
 
@@ -153,9 +154,32 @@ namespace GreenMarketBackend.Controllers
         }
         [AllowAnonymous]
         [HttpGet]
-        public IActionResult ResetPassword()
+        public IActionResult ForgotPasswordConfirmation()
         {
             return View();
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        public IActionResult ResetPassword(string token, string email)
+        {
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
+            {
+                ModelState.AddModelError("", "Invalid password reset token or email.");
+                return View("Error");
+            }
+
+            // Manually decode the email parameter
+            string decodedEmail = HttpUtility.UrlDecode(email);
+            string decodedToken = HttpUtility.UrlDecode(token);
+
+            var model = new ResetPasswordViewModel
+            {
+                Token = decodedToken,
+                Email = decodedEmail
+            };
+
+            return View(model);
         }
 
         [AllowAnonymous]
@@ -165,12 +189,14 @@ namespace GreenMarketBackend.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            // Fetch the user from the database using the UserManager
-            var user = await _userManager.GetUserAsync(User);
+            // The model.Token should already be the decoded token
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                return RedirectToAction("ResetPasswordConfirmation");
+            }
 
-            // Check if the provided current password is correct
-            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
-
+            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
             if (result.Succeeded)
             {
                 return RedirectToAction("ResetPasswordConfirmation");
@@ -185,13 +211,47 @@ namespace GreenMarketBackend.Controllers
 
         [AllowAnonymous]
         [HttpGet]
-        public IActionResult ForgotPasswordConfirmation()
+        public IActionResult ResetPasswordConfirmation()
+        {
+            return View();
+        }
+        [HttpGet]
+        public IActionResult ChangePassword()
         {
             return View();
         }
 
+        [HttpPost]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            if (result.Succeeded)
+            {
+                await _signInManager.RefreshSignInAsync(user);
+                return RedirectToAction("ChangePasswordConfirmation");
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            return View(model);
+        }
+
         [HttpGet]
-        public IActionResult ResetPasswordConfirmation()
+        public IActionResult ChangePasswordConfirmation()
         {
             return View();
         }

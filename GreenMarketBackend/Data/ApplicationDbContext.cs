@@ -142,7 +142,6 @@ namespace GreenMarketBackend.Data
                 new Category { CategoryId = 4, Name = "Root Vegetables", Description = "Various root vegetables", ParentCategoryId = 2 }
             );
 
-
             // Seed a dummy user
             var userId = "a1234567-89ab-cdef-0123-456789abcdef"; // Ensure this is unique and consistent
             modelBuilder.Entity<ApplicationUser>().HasData(new ApplicationUser

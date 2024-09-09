@@ -85,16 +85,38 @@ namespace GreenMarketBackend.Controllers
         public async Task<IActionResult> RegisterAsSeller(bool registerAsSeller)
         {
             var user = await _userManager.GetUserAsync(User);
-            if (registerAsSeller)
+            if (user == null)
             {
+                return NotFound("User not found");
+            }
+
+
+            if (!user.IsSeller)
+            {
+                user.IsSeller = true;
                 await _userManager.AddToRoleAsync(user, "Seller");
             }
             else
             {
-                await _userManager.RemoveFromRoleAsync(user, "Seller");
+                if (user.IsSeller)
+                {
+                    user.IsSeller = false;
+                    await _userManager.RemoveFromRoleAsync(user, "Seller");
+                }
             }
+
+            // Update the user in the database
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                // Handle error (optional)
+                ModelState.AddModelError("", "Unable to update user information.");
+                return View(); // Or return an appropriate view or message
+            }
+
             return RedirectToAction(nameof(Index));
         }
+
 
         [AllowAnonymous]
         [HttpGet]

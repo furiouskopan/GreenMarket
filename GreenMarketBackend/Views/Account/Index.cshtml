@@ -1,8 +1,12 @@
 ﻿@using GreenMarketBackend.Models.ViewModels.AccountViewModels
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+
 @model AccountViewModel
 @{
     ViewData["Title"] = "Account";
     Layout = "_NavBar"; 
+    var user = await UserManager.GetUserAsync(User);
 }
 
 <div class="container">
@@ -42,17 +46,18 @@
             </form>
             <button class="btn btn-warning mt-2" onclick="location.href='@Url.Action("ResetPassword", "Account")'">Reset Password</button>
         </div>
-
-        <div class="col-md-6">
-            <h4>Seller Registration</h4>
-            <form asp-action="RegisterAsSeller">
-                <div class="form-group mb-2">
-                    <label for="sellerCheck">Register as a seller:</label>
-                    <input type="checkbox" id="sellerCheck" name="RegisterAsSeller" class="form-check-input" />
-                </div>
-                <button type="submit" class="btn btn-success">Update Role</button>
-            </form>
-        </div>
+        @if (!user.IsSeller)
+        {
+            <div class="col-md-6">
+                <h4>Seller Registration</h4>
+                <form asp-action="RegisterAsSeller">
+                    <div class="form-group mb-2">
+                        <label for="sellerCheck">Register as a seller:</label>
+                    </div>
+                    <button type="submit" class="btn btn-success">Update Role</button>
+                </form>
+            </div>
+        }
     </div>
 </div>
 

@@ -252,7 +252,6 @@ namespace GreenMarketBackend.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
         // Displays the details of a specific product, including reviews
         // GET: Products/Details/5
         public async Task<IActionResult> Details(int? id)

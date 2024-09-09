@@ -197,24 +197,59 @@ namespace GreenMarketBackend.Controllers
                 return Json(new { success = false, message = "An error occurred while saving changes." });
             }
         }
-
-        [Authorize(Roles = "Admin")]  // Only admin can access this action
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AdminDelete(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AdminHardDelete(int productId)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products
+                .Include(p => p.Reviews)
+                .Include(p => p.CartItems)
+                .Include(p => p.OrderItens) // Include OrderItems to ensure deletion
+                .FirstOrDefaultAsync(p => p.ProductId == productId);
 
             if (product == null)
             {
-                return Json(new { success = false, message = "Product not found." });
+                Console.WriteLine($"Product with ID {productId} not found.");
+                return NotFound();
             }
 
-            // Hard delete directly for admin, even if the product is in any cart
+            // Remove associated CartItems
+            if (product.CartItems != null && product.CartItems.Any())
+            {
+                _context.CartItems.RemoveRange(product.CartItems);
+                Console.WriteLine($"Cart items for product {productId} deleted.");
+            }
+
+            // Remove associated Reviews
+            if (product.Reviews != null && product.Reviews.Any())
+            {
+                _context.Reviews.RemoveRange(product.Reviews);
+                Console.WriteLine($"Reviews for product {productId} deleted.");
+            }
+
+            // Remove associated OrderItems
+            if (product.OrderItens != null && product.OrderItens.Any())
+            {
+                _context.OrderItems.RemoveRange(product.OrderItens);
+                Console.WriteLine($"Order items for product {productId} deleted.");
+            }
+
+            // Remove the product itself
             _context.Products.Remove(product);
 
-            await _context.SaveChangesAsync();
-            return Json(new { success = true });
+            // Save changes to the database
+            try
+            {
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"Product with ID {productId} and all related entities successfully deleted.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error occurred while deleting product with ID {productId}: {ex.Message}");
+                return StatusCode(500, "Internal server error.");
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
 

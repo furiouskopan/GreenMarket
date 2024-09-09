@@ -72,9 +72,16 @@ namespace GreenMarketBackend.Data
 
             modelBuilder.Entity<CartItem>()
                 .HasOne(ci => ci.Product)
-                .WithMany()
+                .WithMany(p => p.CartItems)
                 .HasForeignKey(ci => ci.ProductId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict);  // Restrict deletion in the database
+
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.Product)
+                .WithMany(p => p.OrderItens)
+                .HasForeignKey(oi => oi.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);  // Similarly for OrderItems or other related tables
+
 
             // Configure the navigation properties for hierarchical categories
             modelBuilder.Entity<Category>()

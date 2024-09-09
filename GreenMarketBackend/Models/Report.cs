@@ -25,7 +25,5 @@ namespace GreenMarketBackend.Models
 
         [Required]
         public DateTime Date { get; set; }
-
-        // Other properties as needed
     }
 }

@@ -4,6 +4,7 @@ using GreenMarketBackend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GreenMarketBackend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240908001153_ProductDeletedAt")]
+    partial class ProductDeletedAt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -113,7 +116,7 @@ namespace GreenMarketBackend.Migrations
                             Id = "a1234567-89ab-cdef-0123-456789abcdef",
                             AccessFailedCount = 0,
                             Address = "Epimenonda",
-                            ConcurrencyStamp = "31ddb3d2-7aeb-463e-a3f3-cd08ba150c07",
+                            ConcurrencyStamp = "e60b3062-bed5-4a39-82c2-e3147f731da4",
                             Email = "testuser@example.com",
                             EmailConfirmed = true,
                             FirstName = "Test",
@@ -122,10 +125,10 @@ namespace GreenMarketBackend.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "TESTUSER@EXAMPLE.COM",
                             NormalizedUserName = "TESTUSER",
-                            PasswordHash = "AQAAAAIAAYagAAAAEEvccRR+S7qGXPVcDrUCg/TXhbThQToFT9muQY59G2FIAh+IdT+tj6lwqMq/Hth/wQ==",
+                            PasswordHash = "AQAAAAIAAYagAAAAENxma+mwHOX6aa8qoYBk/DkRVU8WjCc6lthrsePeSn5Q6IXIKzvAhge+W9p0M+BvoQ==",
                             PhoneNumberConfirmed = false,
-                            RegistrationDate = new DateTime(2024, 9, 8, 2, 29, 53, 16, DateTimeKind.Local).AddTicks(3964),
-                            SecurityStamp = "92f0de0e-6d15-4909-b229-f6b186d7a163",
+                            RegistrationDate = new DateTime(2024, 9, 8, 2, 11, 52, 281, DateTimeKind.Local).AddTicks(6082),
+                            SecurityStamp = "99d5b5e9-48fc-48b8-9465-704f854bc3f0",
                             TwoFactorEnabled = false,
                             UserName = "testuser"
                         });
@@ -451,9 +454,9 @@ namespace GreenMarketBackend.Migrations
                             AverageRating = 4.5,
                             CategoryId = 1,
                             CreatedByUserId = "a1234567-89ab-cdef-0123-456789abcdef",
-                            CreatedDate = new DateTime(2024, 9, 8, 2, 29, 53, 16, DateTimeKind.Local).AddTicks(4290),
+                            CreatedDate = new DateTime(2024, 9, 8, 2, 11, 52, 281, DateTimeKind.Local).AddTicks(6375),
                             Description = "Fresh apples from local orchards.",
-                            HarvestDate = new DateTime(2024, 8, 9, 2, 29, 53, 16, DateTimeKind.Local).AddTicks(4294),
+                            HarvestDate = new DateTime(2024, 8, 9, 2, 11, 52, 281, DateTimeKind.Local).AddTicks(6378),
                             ImageURL = "path_to_apples.jpg",
                             IsAvailable = false,
                             Name = "Organic Apples",
@@ -469,9 +472,9 @@ namespace GreenMarketBackend.Migrations
                             AverageRating = 4.7999999999999998,
                             CategoryId = 2,
                             CreatedByUserId = "a1234567-89ab-cdef-0123-456789abcdef",
-                            CreatedDate = new DateTime(2024, 9, 8, 2, 29, 53, 16, DateTimeKind.Local).AddTicks(4300),
+                            CreatedDate = new DateTime(2024, 9, 8, 2, 11, 52, 281, DateTimeKind.Local).AddTicks(6385),
                             Description = "Crunchy carrots perfect for a healthy snack.",
-                            HarvestDate = new DateTime(2024, 8, 29, 2, 29, 53, 16, DateTimeKind.Local).AddTicks(4302),
+                            HarvestDate = new DateTime(2024, 8, 29, 2, 11, 52, 281, DateTimeKind.Local).AddTicks(6387),
                             ImageURL = "path_to_carrots.jpg",
                             IsAvailable = false,
                             Name = "Organic Carrots",
@@ -702,7 +705,7 @@ namespace GreenMarketBackend.Migrations
                         .IsRequired();
 
                     b.HasOne("GreenMarketBackend.Models.Product", "Product")
-                        .WithMany("CartItems")
+                        .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -784,7 +787,7 @@ namespace GreenMarketBackend.Migrations
                         .IsRequired();
 
                     b.HasOne("GreenMarketBackend.Models.Product", "Product")
-                        .WithMany("OrderItens")
+                        .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -939,10 +942,6 @@ namespace GreenMarketBackend.Migrations
 
             modelBuilder.Entity("GreenMarketBackend.Models.Product", b =>
                 {
-                    b.Navigation("CartItems");
-
-                    b.Navigation("OrderItens");
-
                     b.Navigation("Reviews");
                 });
 #pragma warning restore 612, 618

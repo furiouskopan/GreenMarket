@@ -53,6 +53,8 @@ namespace GreenMarketBackend.Models
         public int? ParentCategoryId { get; set; }
         public virtual Category ParentCategory { get; set; }
         public virtual ICollection<Review> Reviews { get; set; }
+        public ICollection<CartItem> CartItems { get; set; }
+        public ICollection<OrderItem> OrderItens { get; set; }
         public double AverageRating { get; set; }
         public int ReviewCount { get; set; }
     }

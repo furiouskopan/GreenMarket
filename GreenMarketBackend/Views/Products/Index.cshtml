@@ -6,6 +6,9 @@
     var sortOrder = Context.Request.Query["sortOrder"];
 }
 <div class="row">
+    <div class="col text-start mt-4 ms-3">
+        <a href="@Url.Action("Create", "Products")" style="text-decoration:none; color:green">Add Your Product</a>
+    </div>
     <div class="col text-end mt-4 me-3">
         <a href="@Url.Action("MyProducts", "Products")" style="text-decoration:none; color:green">My Products</a>
     </div>

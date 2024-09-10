@@ -12,6 +12,11 @@ using System.IO;
 using GreenMarketBackend.Models.ViewModels.ProductViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Hosting;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.PixelFormats;
+
 
 namespace GreenMarketBackend.Controllers
 {
@@ -149,16 +154,23 @@ namespace GreenMarketBackend.Controllers
             string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(imageFile.FileName);
             string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-            // Save the file to the server
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            // Load the image and resize it
+            using (var image = await Image.LoadAsync(imageFile.OpenReadStream()))
             {
-                await imageFile.CopyToAsync(stream);
+                // Resize the image (example: resize to a width of 800px, maintain aspect ratio)
+                image.Mutate(x => x.Resize(new ResizeOptions
+                {
+                    Size = new Size(800, 600), // Adjust size as needed
+                    Mode = ResizeMode.Crop
+                }));
+
+                // Save the resized image to the server
+                await image.SaveAsync(filePath);
             }
 
             // Return the relative path to the image
             return Path.Combine("images", uniqueFileName);
         }
-
 
         // Handles file upload for product images
         //private string UploadedFile(ProductViewModel model)

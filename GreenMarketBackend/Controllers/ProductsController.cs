@@ -311,6 +311,7 @@ namespace GreenMarketBackend.Controllers
                 .Include(p => p.Reviews)
                 .ThenInclude(r => r.User)
                 .Include(p => p.CreatedByUser)
+                .Include(p => p.Images)  // Include the images
                 .FirstOrDefaultAsync(m => m.ProductId == id);
 
             if (product == null)
@@ -320,16 +321,18 @@ namespace GreenMarketBackend.Controllers
 
             var viewModel = new ProductDetailsViewModel
             {
-                ProductId = product.ProductId,  
+                ProductId = product.ProductId,
                 Product = product,
                 Reviews = product.Reviews.ToList(),
                 NewReview = new ReviewSubmissionViewModel { ProductId = product.ProductId },
-                Uploader = product.CreatedByUser
+                Uploader = product.CreatedByUser,
+                Images = product.Images.ToList(),  // Add images to the view model
+                //MainImageUrl = product.MainImageUrl  // Set the main image URL
             };
 
             return View(viewModel);
         }
-            
+
 
         // GET: Products/MyProducts
         public async Task<IActionResult> MyProducts()

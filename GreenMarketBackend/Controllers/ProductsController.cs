@@ -94,7 +94,7 @@ namespace GreenMarketBackend.Controllers
                     ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", model.CategoryId);
                     return View(model);
                 }
-
+                var user = await _userManager.GetUserAsync(User);
                 var product = new Product
                 {
                     Name = model.Name,
@@ -103,9 +103,11 @@ namespace GreenMarketBackend.Controllers
                     StockQuantity = model.StockQuantity,
                     Pesticides = model.Pesticides,
                     Origin = model.Origin,
+                    CreatedDate = DateTime.UtcNow,
                     HarvestDate = model.HarvestDate,
+                    CreatedByUserId = user.Id,
                     CategoryId = model.CategoryId,
-                    CreatedDate = DateTime.Now
+                    IsAvailable = true
                 };
 
                 for (int i = 0; i < model.ImageFiles.Count; i++)

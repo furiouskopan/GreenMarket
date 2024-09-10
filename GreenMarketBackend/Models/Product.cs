@@ -23,8 +23,10 @@ namespace GreenMarketBackend.Models
         [Required]
         public int StockQuantity { get; set; }
 
+        //[Required]
+        //public string ImageURL { get; set; }
         [Required]
-        public string ImageURL { get; set; }
+        public virtual ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
         [Required]
         public string Pesticides { get; set; }
         [Required]

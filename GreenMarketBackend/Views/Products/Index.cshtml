@@ -5,14 +5,19 @@
     Layout = "_NavBar";
     var sortOrder = Context.Request.Query["sortOrder"];
 }
-<div class="row">
-    <div class="col text-start mt-4 ms-3">
-        <a href="@Url.Action("Create", "Products")" style="text-decoration:none; color:green">Add Your Product</a>
+
+@* @if (User.IsInRole("Admin"))
+{ *@
+    <div class="row">
+        <div class="col text-start mt-4 ms-3">
+            <a href="@Url.Action("Create", "Products")" style="text-decoration:none; color:green">Add Your Product</a>
+        </div>
+        <div class="col text-end mt-4 me-3">
+            <a href="@Url.Action("MyProducts", "Products")" style="text-decoration:none; color:green">My Products</a>
+        </div>
     </div>
-    <div class="col text-end mt-4 me-3">
-        <a href="@Url.Action("MyProducts", "Products")" style="text-decoration:none; color:green">My Products</a>
-    </div>
-</div>
+@* } *@
+
 <body>
     <div class="container my-5" id="products">
         <h2 class="text-center mb-4">Our Products</h2>

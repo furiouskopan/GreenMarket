@@ -6,6 +6,8 @@ using GreenMarketBackend.Models.ViewModels.AccountViewModels;
 using System.Net;
 using System.Text.Encodings.Web;
 using System.Web;
+using Microsoft.EntityFrameworkCore;
+using GreenMarketBackend.Data;
 
 namespace GreenMarketBackend.Controllers
 {
@@ -15,12 +17,14 @@ namespace GreenMarketBackend.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly EmailService _emailService;
+        private readonly ApplicationDbContext _context;
 
-        public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, EmailService emailService)
+        public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, EmailService emailService, ApplicationDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailService = emailService;
+            _context = context;
         }
 
         [HttpGet]
@@ -116,6 +120,38 @@ namespace GreenMarketBackend.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ReportUser(string reportedUserId, string reportContent)
+        {
+            if (string.IsNullOrEmpty(reportedUserId) || string.IsNullOrEmpty(reportContent))
+            {
+                return BadRequest("Invalid report details.");
+            }
+
+            var reporterUserId = _userManager.GetUserId(User); // Get the ID of the currently logged-in user
+            if (reporterUserId == reportedUserId)
+            {
+                return BadRequest("You cannot report yourself.");
+            }
+
+            var report = new Report
+            {
+                ReporterUserId = reporterUserId,
+                ReportedUserId = reportedUserId,
+                Content = reportContent,
+                Date = DateTime.Now
+            };
+
+            // Assuming you have a DbContext for your application
+            _context.Reports.Add(report);
+            await _context.SaveChangesAsync();
+
+            // Optionally, send an email notification to the admin
+            await _emailService.SendEmailAsync("packaras@gmail.com", "New User Report", $"A user has been reported.\nReporter ID: {reporterUserId}\nReported User ID: {reportedUserId}\nContent: {reportContent}");
+
+            return RedirectToAction(nameof(Details), new { id = reportedUserId });
         }
 
 

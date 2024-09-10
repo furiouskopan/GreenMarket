@@ -11,6 +11,7 @@ using System;
 using System.IO;
 using GreenMarketBackend.Models.ViewModels.ProductViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Hosting;
 
 namespace GreenMarketBackend.Controllers
 {
@@ -86,52 +87,95 @@ namespace GreenMarketBackend.Controllers
         {
             if (ModelState.IsValid)
             {
-                string uniqueFileName = UploadedFile(model);
+                // Ensure at least 3 images are provided
+                if (model.ImageFiles.Count < 3)
+                {
+                    ModelState.AddModelError("", "At least 3 images are required.");
+                    ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", model.CategoryId);
+                    return View(model);
+                }
 
-                var user = await _userManager.GetUserAsync(User);
                 var product = new Product
                 {
                     Name = model.Name,
                     Description = model.Description,
                     Price = model.Price,
                     StockQuantity = model.StockQuantity,
-                    ImageURL = uniqueFileName,
                     Pesticides = model.Pesticides,
                     Origin = model.Origin,
-                    CreatedDate = DateTime.UtcNow,
                     HarvestDate = model.HarvestDate,
-                    CreatedByUserId = user.Id,
                     CategoryId = model.CategoryId,
-                    IsAvailable = true
+                    CreatedDate = DateTime.Now
                 };
 
-                _context.Add(product);
+                for (int i = 0; i < model.ImageFiles.Count; i++)
+                {
+                    var imageFile = model.ImageFiles[i];
+                    var imageUrl = await SaveImageAsync(imageFile);
+
+                    var productImage = new ProductImage
+                    {
+                        ImageUrl = imageUrl,
+                        IsMain = i == model.MainImageIndex
+                    };
+
+                    product.Images.Add(productImage);
+
+                    if (productImage.IsMain)
+                    {
+                        product.ImageURL = imageUrl;
+                    }
+                }
+
+                _context.Products.Add(product);
                 await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name");
+            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", model.CategoryId);
             return View(model);
         }
 
-        // Handles file upload for product images
-        private string UploadedFile(ProductViewModel model)
+        private async Task<string> SaveImageAsync(IFormFile imageFile)
         {
-            string uniqueFileName = null;
+            // Ensure the directory exists
+            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
+            Directory.CreateDirectory(uploadsFolder);
 
-            if (model.ImageFile != null)
+            // Generate a unique file name
+            string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(imageFile.FileName);
+            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            // Save the file to the server
+            using (var stream = new FileStream(filePath, FileMode.Create))
             {
-                string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
-                uniqueFileName = Guid.NewGuid().ToString() + "_" + model.ImageFile.FileName;
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    model.ImageFile.CopyTo(fileStream);
-                }
+                await imageFile.CopyToAsync(stream);
             }
 
-            return uniqueFileName;
+            // Return the relative path to the image
+            return Path.Combine("images", uniqueFileName);
         }
+
+
+        // Handles file upload for product images
+        //private string UploadedFile(ProductViewModel model)
+        //{
+        //    string uniqueFileName = null;
+
+        //    if (model.ImageFile != null)
+        //    {
+        //        string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
+        //        uniqueFileName = Guid.NewGuid().ToString() + "_" + model.ImageFile.FileName;
+        //        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+        //        using (var fileStream = new FileStream(filePath, FileMode.Create))
+        //        {
+        //            model.ImageFile.CopyTo(fileStream);
+        //        }
+        //    }
+
+        //    return uniqueFileName;
+        //}
 
         //// Displays the delete confirmation page
         //public async Task<IActionResult> Delete(int? id)

@@ -35,10 +35,15 @@
                 <input asp-for="StockQuantity" class="form-control" />
                 <span asp-validation-for="StockQuantity" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="ImageURL" class="control-label"></label>
-                <input asp-for="ImageURL" class="form-control" />
-                <span asp-validation-for="ImageURL" class="text-danger"></span>
+            <div class="form-group mb-3">
+                <label asp-for="MainImageIndex" class="form-label">Select Main Image</label>
+                <select asp-for="MainImageIndex" class="form-control">
+                    @for (int i = 0; i < Model.ImageFiles.Count; i++)
+                    {
+                        <option value="@i">Image @i</option>
+                    }
+                </select>
+                <span asp-validation-for="MainImageIndex" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Pesticides" class="control-label"></label>

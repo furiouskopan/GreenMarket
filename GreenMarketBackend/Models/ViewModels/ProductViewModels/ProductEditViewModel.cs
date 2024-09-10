@@ -23,6 +23,13 @@ namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
 
         [Required]
         public string ImageURL { get; set; }
+        [Required]
+        public int MainImageIndex { get; set; }
+
+        public List<IFormFile> ImageFiles { get; set; } = new List<IFormFile>();
+        public List<ProductImage> ExistingImages { get; set; } = new List<ProductImage>();
+
+        public bool IsRemovingExistingImage { get; set; }
 
         [Required]
         public string Pesticides { get; set; }

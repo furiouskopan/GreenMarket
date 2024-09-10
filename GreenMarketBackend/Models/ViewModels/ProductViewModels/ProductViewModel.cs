@@ -18,7 +18,10 @@ namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
         public int StockQuantity { get; set; }
 
         [Required]
-        public IFormFile ImageFile { get; set; }
+        public List<IFormFile> ImageFiles { get; set; } = new List<IFormFile>();
+
+        [Required]
+        public int MainImageIndex { get; set; }
 
         [Required]
         public string Pesticides { get; set; }

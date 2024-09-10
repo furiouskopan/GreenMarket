@@ -5,11 +5,9 @@ namespace GreenMarketBackend.Models
 {
     public class ProductImage
     {
-        [Key]
-        public int ImageId { get; set; }
-
-        [Required]
-        public string ImageURL { get; set; }
+        public int Id { get; set; }
+        public string ImageUrl { get; set; }
+        public bool IsMain { get; set; }
 
         [ForeignKey("Product")]
         public int ProductId { get; set; }

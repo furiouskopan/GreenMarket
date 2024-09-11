@@ -27,7 +27,7 @@ namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
         public int MainImageIndex { get; set; }
 
         public List<IFormFile> ImageFiles { get; set; } = new List<IFormFile>();
-        public List<ProductImage> ExistingImages { get; set; } = new List<ProductImage>();
+        public List<string> ExistingImageUrls { get; set; } = new List<string>();
 
         public bool IsRemovingExistingImage { get; set; }
 

@@ -1,5 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Http;
 
 namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
 {
@@ -21,15 +24,15 @@ namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
         [Required]
         public int StockQuantity { get; set; }
 
-        [Required]
-        public string ImageURL { get; set; }
-        [Required]
-        public int MainImageIndex { get; set; }
-
-        public List<IFormFile> ImageFiles { get; set; } = new List<IFormFile>();
+        // Existing images' URLs
         public List<string> ExistingImageUrls { get; set; } = new List<string>();
 
-        public bool IsRemovingExistingImage { get; set; }
+        // New images for upload
+        public List<IFormFile> ImageFiles { get; set; } = new List<IFormFile>();
+
+        // Index of the main image to display
+        [Required]
+        public int MainImageIndex { get; set; }
 
         [Required]
         public string Pesticides { get; set; }
@@ -45,5 +48,6 @@ namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
 
         public DateTime CreatedDate { get; set; }
 
+        public bool IsRemovingExistingImage { get; set; } // For handling image removals
     }
 }

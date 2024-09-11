@@ -164,12 +164,11 @@ namespace GreenMarketBackend.Data
             modelBuilder.Entity<Product>().HasData(
                 new Product
                 {
-                    ProductId = 1,
+                    ProductId = 123,
                     Name = "Organic Apples",
                     Description = "Fresh apples from local orchards.",
                     Price = 1.99m,
                     StockQuantity = 100,
-                    ImageURL = "path_to_apples.jpg",
                     Pesticides = "None",
                     Origin = "Local",
                     CreatedDate = DateTime.Now,
@@ -178,25 +177,59 @@ namespace GreenMarketBackend.Data
                     CategoryId = 1,  // Ensure this ID exists in your Category table
                     AverageRating = 4.5,
                     ReviewCount = 10
-                },
-                new Product
-                {
-                    ProductId = 2,
-                    Name = "Organic Carrots",
-                    Description = "Crunchy carrots perfect for a healthy snack.",
-                    Price = 0.99m,
-                    StockQuantity = 150,
-                    ImageURL = "path_to_carrots.jpg",
-                    Pesticides = "None",
-                    Origin = "Local",
-                    CreatedDate = DateTime.Now,
-                    HarvestDate = DateTime.Now.AddDays(-10),
-                    CreatedByUserId = userId,  // Same note as above
-                    CategoryId = 2,  // Same note as above
-                    AverageRating = 4.8,
-                    ReviewCount = 8
                 }
+                //new Product
+                //{
+                //    ProductId = 2,
+                //    Name = "Organic Carrots",
+                //    Description = "Crunchy carrots perfect for a healthy snack.",
+                //    Price = 0.99m,
+                //    StockQuantity = 150,
+                //    Pesticides = "None",
+                //    Origin = "Local",
+                //    CreatedDate = DateTime.Now,
+                //    HarvestDate = DateTime.Now.AddDays(-10),
+                //    CreatedByUserId = userId,  // Ensure this ID exists in your User table
+                //    CategoryId = 2,  // Ensure this ID exists in your Category table
+                //    AverageRating = 4.8,
+                //    ReviewCount = 8
+                //}
             );
+
+            modelBuilder.Entity<ProductImage>().HasData(
+                // Images for Product 1 (Apples)
+                new ProductImage
+                {
+                    Id = 1,
+                    ProductId = 12, // Foreign key to Product 1 (Apples)
+                    ImageUrl = "path_to_apples.jpg",
+                    IsMain = false
+                }
+);
+
+            //    // Images for Product 2 (Carrots)
+            //    new ProductImage
+            //    {
+            //        Id = 4,
+            //        ProductId = 2, // Foreign key to Product 2 (Carrots)
+            //        ImageUrl = "path_to_carrots.jpg",
+            //        IsMain = true
+            //    },
+            //    new ProductImage
+            //    {
+            //        Id = 5,
+            //        ProductId = 2, // Foreign key to Product 2 (Carrots)
+            //        ImageUrl = "path_to_carrots2.jpg",
+            //        IsMain = false
+            //    },
+            //    new ProductImage
+            //    {
+            //        Id = 6,
+            //        ProductId = 2, // Foreign key to Product 2 (Carrots)
+            //        ImageUrl = "path_to_carrots3.jpg",
+            //        IsMain = false
+            //    }
+            //);
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

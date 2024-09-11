@@ -99,6 +99,7 @@ namespace GreenMarketBackend.Controllers
                     ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", model.CategoryId);
                     return View(model);
                 }
+
                 var user = await _userManager.GetUserAsync(User);
                 var product = new Product
                 {
@@ -118,20 +119,15 @@ namespace GreenMarketBackend.Controllers
                 for (int i = 0; i < model.ImageFiles.Count; i++)
                 {
                     var imageFile = model.ImageFiles[i];
-                    var imageUrl = await SaveImageAsync(imageFile);
+                    var imageUrl = await SaveImageAsync(imageFile); // SaveImageAsync should store the image and return the URL
 
                     var productImage = new ProductImage
                     {
                         ImageUrl = imageUrl,
-                        IsMain = i == model.MainImageIndex
+                        IsMain = i == model.MainImageIndex // Mark the image as the main image if it's the selected one
                     };
 
                     product.Images.Add(productImage);
-
-                    if (productImage.IsMain)
-                    {
-                        product.ImageURL = imageUrl;
-                    }
                 }
 
                 _context.Products.Add(product);
@@ -427,7 +423,7 @@ namespace GreenMarketBackend.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products.Include(p => p.Images).FirstOrDefaultAsync(p => p.ProductId == id);
             if (product == null)
             {
                 return NotFound();
@@ -440,17 +436,19 @@ namespace GreenMarketBackend.Controllers
                 Description = product.Description,
                 Price = product.Price,
                 StockQuantity = product.StockQuantity,
-                ImageURL = product.ImageURL,
+                ExistingImageUrls = product.Images.Select(i => i.ImageUrl).ToList(),
                 Pesticides = product.Pesticides,
                 Origin = product.Origin,
                 HarvestDate = product.HarvestDate,
                 CategoryId = product.CategoryId,
                 CreatedDate = product.CreatedDate,
+                MainImageIndex = product.Images.ToList().FindIndex(i => i.IsMain)
             };
 
             ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", product.CategoryId);
             return View(viewModel);
         }
+
 
         // POST: Products/Edit/5
         [HttpPost]
@@ -466,21 +464,34 @@ namespace GreenMarketBackend.Controllers
             {
                 try
                 {
-                    var product = await _context.Products.FindAsync(id);
+                    var product = await _context.Products.Include(p => p.Images).FirstOrDefaultAsync(p => p.ProductId == id);
                     if (product == null)
                     {
                         return NotFound();
                     }
 
+                    // Update product details
                     product.Name = model.Name;
                     product.Description = model.Description;
                     product.Price = model.Price;
                     product.StockQuantity = model.StockQuantity;
-                    product.ImageURL = model.ImageURL;
                     product.Pesticides = model.Pesticides;
                     product.Origin = model.Origin;
                     product.HarvestDate = model.HarvestDate;
                     product.CategoryId = model.CategoryId;
+
+                    // Handle image uploads
+                    if (model.ImageFiles != null && model.ImageFiles.Count > 0)
+                    {
+                        foreach (var imageFile in model.ImageFiles.Take(5)) // Limit to 5 images
+                        {
+                            var imagePath = await SaveImageAsync(imageFile);
+                            product.Images.Add(new ProductImage { ImageUrl = imagePath });
+                        }
+                    }
+
+                    // Update the main image index
+                    product.MainImageIndex = model.MainImageIndex;
 
                     _context.Update(product);
                     await _context.SaveChangesAsync();
@@ -498,6 +509,7 @@ namespace GreenMarketBackend.Controllers
                 }
                 return RedirectToAction(nameof(MyProducts));
             }
+
             ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", model.CategoryId);
             return View(model);
         }

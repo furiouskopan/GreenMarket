@@ -23,7 +23,7 @@ namespace GreenMarketBackend.Data
         public DbSet<Review> Reviews { get; set; }
         public DbSet<ChatSession> ChatSessions { get; set; }
         public DbSet<Message> Messages { get; set; }
-
+        //public DbSet <ProductImage> ProductImages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -205,7 +205,7 @@ namespace GreenMarketBackend.Data
                     ImageUrl = "path_to_apples.jpg",
                     IsMain = false
                 }
-);
+            );
 
             //    // Images for Product 2 (Carrots)
             //    new ProductImage

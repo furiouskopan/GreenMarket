@@ -38,7 +38,11 @@ namespace GreenMarketBackend.Controllers
         {
             var parentCategories = await _context.Categories.Where(c => c.ParentCategoryId == null).ToListAsync();
             var childCategories = Enumerable.Empty<Category>();
-            IQueryable<Product> productsQuery = _context.Products.Include(p => p.Category);
+
+            // Include Images along with Category
+            IQueryable<Product> productsQuery = _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Images); // Make sure images are included in the query
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))

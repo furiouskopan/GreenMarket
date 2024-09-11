@@ -103,7 +103,7 @@
                             @if (product.Images != null && product.Images.Any())
                             {
                                 var mainImage = product.Images.FirstOrDefault(i => i.IsMain) ?? product.Images.FirstOrDefault();
-                                var imageUrl = mainImage != null ? Url.Content("~/images/" + mainImage.ImageUrl) : Url.Content("~/images/default-product.png");
+                                var imageUrl = mainImage != null ? Url.Content("~/" + mainImage.ImageUrl) : Url.Content("~/images/default-product.png");
                                 <img src="@imageUrl" class="card-img-top" alt="@product.Name">
                             }
                             else

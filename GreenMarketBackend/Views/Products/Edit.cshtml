@@ -35,6 +35,8 @@
                 <input asp-for="StockQuantity" class="form-control" />
                 <span asp-validation-for="StockQuantity" class="text-danger"></span>
             </div>
+
+            <!-- Display existing images -->
             <div class="form-group mb-3">
                 <label class="form-label">Existing Images</label>
                 <div class="row">
@@ -52,22 +54,32 @@
                 </div>
             </div>
 
+            <!-- Select the main image -->
             <div class="form-group mb-3">
                 <label asp-for="MainImageIndex" class="form-label">Select Main Image</label>
                 <select asp-for="MainImageIndex" class="form-control">
                     @for (int i = 0; i < Model.ExistingImageUrls.Count; i++)
                     {
-                        <option value="@i">Image @i</option>
+                        if (i == Model.MainImageIndex)
+                        {
+                            <option value="@i" selected>Image @i</option>
+                        }
+                        else
+                        {
+                            <option value="@i">Image @i</option>
+                        }
                     }
                 </select>
                 <span asp-validation-for="MainImageIndex" class="text-danger"></span>
             </div>
 
+            <!-- Upload new images -->
             <div class="form-group">
                 <label for="newImages" class="form-label">Upload New Images (Max 5)</label>
                 <input type="file" id="newImages" name="ImageFiles" multiple class="form-control" />
                 <span asp-validation-for="ImageFiles" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Pesticides" class="control-label"></label>
                 <input asp-for="Pesticides" class="form-control" />

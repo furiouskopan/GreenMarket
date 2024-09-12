@@ -457,7 +457,7 @@ namespace GreenMarketBackend.Controllers
         // POST: Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, ProductEditViewModel model)
+        public async Task<IActionResult> Edit(int id, ProductEditViewModel model, List<string> RemoveImages)
         {
             if (id != model.ProductId)
             {
@@ -484,7 +484,20 @@ namespace GreenMarketBackend.Controllers
                     product.HarvestDate = model.HarvestDate;
                     product.CategoryId = model.CategoryId;
 
-                    // Handle image uploads
+                    // Remove selected images
+                    if (RemoveImages != null && RemoveImages.Any())
+                    {
+                        foreach (var imageUrl in RemoveImages)
+                        {
+                            var imageToRemove = product.Images.FirstOrDefault(i => i.ImageUrl == imageUrl);
+                            if (imageToRemove != null)
+                            {
+                                _context.ProductImages.Remove(imageToRemove);
+                            }
+                        }
+                    }
+
+                    // Handle new image uploads
                     if (model.ImageFiles != null && model.ImageFiles.Count > 0)
                     {
                         foreach (var imageFile in model.ImageFiles.Take(5)) // Limit to 5 images
@@ -517,6 +530,7 @@ namespace GreenMarketBackend.Controllers
             ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", model.CategoryId);
             return View(model);
         }
+
 
         private bool ProductExists(int id)
         {

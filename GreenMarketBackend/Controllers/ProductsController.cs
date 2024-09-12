@@ -456,7 +456,7 @@ namespace GreenMarketBackend.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, ProductEditViewModel model, List<string> RemoveImages, List<IFormFile> ReplaceImageFiles, List<string> ReplaceImageUrls)
+        public async Task<IActionResult> Edit(int id, ProductEditViewModel model, List<string> RemoveImages)
         {
             if (id != model.ProductId)
             {
@@ -496,43 +496,20 @@ namespace GreenMarketBackend.Controllers
                         }
                     }
 
-                    // Replace images with new ones
-                    if (ReplaceImageFiles != null && ReplaceImageFiles.Any())
-                    {
-                        for (int i = 0; i < ReplaceImageFiles.Count; i++)
-                        {
-                            var imageUrl = ReplaceImageUrls[i];
-                            var imageToReplace = product.Images.FirstOrDefault(i => i.ImageUrl == imageUrl);
-                            if (imageToReplace != null)
-                            {
-                                // Remove the old image
-                                _context.ProductImages.Remove(imageToReplace);
-
-                                // Save the new image and add it to the product
-                                var newImagePath = await SaveImageAsync(ReplaceImageFiles[i]);
-                                product.Images.Add(new ProductImage { ImageUrl = newImagePath });
-                            }
-                        }
-                    }
-
-                    // Handle new image uploads
+                    // Handle new image uploads (add to the existing images)
                     if (model.ImageFiles != null && model.ImageFiles.Count > 0)
                     {
                         foreach (var imageFile in model.ImageFiles.Take(5)) // Limit to 5 images
                         {
-                            var imagePath = await SaveImageAsync(imageFile);
+                            var imagePath = await SaveImageAsync(imageFile); // Save the image
                             product.Images.Add(new ProductImage { ImageUrl = imagePath });
                         }
                     }
 
-                    // Update the main image based on URL selection
-                    var mainImage = product.Images.FirstOrDefault(i => i.ImageUrl == model.MainImageUrl);
-                    if (mainImage != null)
+                    // Set the main image based on the selected MainImageUrl
+                    foreach (var img in product.Images)
                     {
-                        foreach (var img in product.Images)
-                        {
-                            img.IsMain = (img.ImageUrl == model.MainImageUrl);
-                        }
+                        img.IsMain = (img.ImageUrl == model.MainImageUrl);
                     }
 
                     _context.Update(product);
@@ -552,9 +529,11 @@ namespace GreenMarketBackend.Controllers
                 return RedirectToAction(nameof(MyProducts));
             }
 
+            // Reload categories if model state is invalid
             ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", model.CategoryId);
             return View(model);
         }
+
 
         private bool ProductExists(int id)
         {

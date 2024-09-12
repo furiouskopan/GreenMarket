@@ -44,34 +44,24 @@
                     {
                         <div class="col-md-3">
                             <img src="@Url.Content("~/" + Model.ExistingImageUrls[i])" class="img-thumbnail" alt="Product Image" />
+
                             <!-- Checkbox to mark images for removal -->
                             <div class="form-check">
                                 <input type="checkbox" name="RemoveImages" value="@Model.ExistingImageUrls[i]" class="form-check-input" />
                                 <label class="form-check-label">Remove this image</label>
+                            </div>
+
+                            <!-- Radio button to select this image as the main image -->
+                            <div class="form-check">
+                                <input type="radio" name="MainImageUrl" value="@Model.ExistingImageUrls[i]"
+                                       class="form-check-input" @(Model.ExistingImageUrls[i] == Model.MainImageUrl ? "checked" : "") />
+                                <label class="form-check-label">Set as Main</label>
                             </div>
                         </div>
                     }
                 </div>
             </div>
 
-            <!-- Select the main image -->
-            <div class="form-group mb-3">
-                <label asp-for="MainImageIndex" class="form-label">Select Main Image</label>
-                <select asp-for="MainImageIndex" class="form-control">
-                    @for (int i = 0; i < Model.ExistingImageUrls.Count; i++)
-                    {
-                        if (i == Model.MainImageIndex)
-                        {
-                            <option value="@i" selected>Image @i</option>
-                        }
-                        else
-                        {
-                            <option value="@i">Image @i</option>
-                        }
-                    }
-                </select>
-                <span asp-validation-for="MainImageIndex" class="text-danger"></span>
-            </div>
 
             <!-- Upload new images -->
             <div class="form-group">

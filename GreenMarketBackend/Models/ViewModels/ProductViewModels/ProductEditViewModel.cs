@@ -30,9 +30,9 @@ namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
         // New images for upload
         public List<IFormFile> ImageFiles { get; set; } = new List<IFormFile>();
 
-        // Index of the main image to display
+        // URL of the selected main image
         [Required]
-        public int MainImageIndex { get; set; }
+        public string MainImageUrl { get; set; }  // <-- This is the new property
 
         [Required]
         public string Pesticides { get; set; }
@@ -50,4 +50,5 @@ namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
 
         public bool IsRemovingExistingImage { get; set; } // For handling image removals
     }
+
 }

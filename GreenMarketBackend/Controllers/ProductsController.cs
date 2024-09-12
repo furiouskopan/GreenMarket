@@ -446,7 +446,7 @@ namespace GreenMarketBackend.Controllers
                 HarvestDate = product.HarvestDate,
                 CategoryId = product.CategoryId,
                 CreatedDate = product.CreatedDate,
-                MainImageIndex = product.Images.ToList().FindIndex(i => i.IsMain)
+                MainImageUrl = product.Images.FirstOrDefault(i => i.IsMain)?.ImageUrl
             };
 
             ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", product.CategoryId);
@@ -454,10 +454,9 @@ namespace GreenMarketBackend.Controllers
         }
 
 
-        // POST: Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, ProductEditViewModel model, List<string> RemoveImages)
+        public async Task<IActionResult> Edit(int id, ProductEditViewModel model, List<string> RemoveImages, List<IFormFile> ReplaceImageFiles, List<string> ReplaceImageUrls)
         {
             if (id != model.ProductId)
             {
@@ -497,6 +496,25 @@ namespace GreenMarketBackend.Controllers
                         }
                     }
 
+                    // Replace images with new ones
+                    if (ReplaceImageFiles != null && ReplaceImageFiles.Any())
+                    {
+                        for (int i = 0; i < ReplaceImageFiles.Count; i++)
+                        {
+                            var imageUrl = ReplaceImageUrls[i];
+                            var imageToReplace = product.Images.FirstOrDefault(i => i.ImageUrl == imageUrl);
+                            if (imageToReplace != null)
+                            {
+                                // Remove the old image
+                                _context.ProductImages.Remove(imageToReplace);
+
+                                // Save the new image and add it to the product
+                                var newImagePath = await SaveImageAsync(ReplaceImageFiles[i]);
+                                product.Images.Add(new ProductImage { ImageUrl = newImagePath });
+                            }
+                        }
+                    }
+
                     // Handle new image uploads
                     if (model.ImageFiles != null && model.ImageFiles.Count > 0)
                     {
@@ -507,8 +525,15 @@ namespace GreenMarketBackend.Controllers
                         }
                     }
 
-                    // Update the main image index
-                    product.MainImageIndex = model.MainImageIndex;
+                    // Update the main image based on URL selection
+                    var mainImage = product.Images.FirstOrDefault(i => i.ImageUrl == model.MainImageUrl);
+                    if (mainImage != null)
+                    {
+                        foreach (var img in product.Images)
+                        {
+                            img.IsMain = (img.ImageUrl == model.MainImageUrl);
+                        }
+                    }
 
                     _context.Update(product);
                     await _context.SaveChangesAsync();
@@ -530,7 +555,6 @@ namespace GreenMarketBackend.Controllers
             ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", model.CategoryId);
             return View(model);
         }
-
 
         private bool ProductExists(int id)
         {

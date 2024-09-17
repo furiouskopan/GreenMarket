@@ -1,4 +1,5 @@
-﻿@model List<Product>
+﻿@using GreenMarketBackend.Models.ViewModels.ProductViewModels
+@model List<FeatureProductViewModel>
 @{
     ViewData["Title"] = "Home";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -22,20 +23,14 @@
             {
                 <div class="col-md-4">
                     <div class="card">
-                        @if (product.Images != null && product.Images.Any())
-                        {
-                            var mainImage = product.Images.FirstOrDefault(i => i.IsMain) ?? product.Images.FirstOrDefault();
-                            var imageUrl = mainImage != null ? Url.Content("~/" + mainImage.ImageUrl) : Url.Content("~/images/default-product.png");
-                            <img src="@imageUrl" class="card-img-top" alt="@product.Name">
-                        }
-                        else
-                        {
-                            <img src="~/images/default-product.png" class="card-img-top" alt="@product.Name">
-                        }
+                        <img src="@Url.Content("~/" + product.MainImageUrl)" class="card-img-top" alt="@product.Name">
                         <div class="card-body">
                             <h5 class="card-title">@product.Name</h5>
                             <p class="card-text">@product.Description</p>
-                            <a href="#" class="btn btn-success">Buy Now</a>
+                            <p class="card-text"><strong>Price:</strong> @product.Price.ToString("C")</p>
+
+                            <!-- Link to the product details page -->
+                            <a href="@Url.Action("Details", "Products", new { id = product.ProductId })" class="btn btn-success">Buy Now</a>
                         </div>
                     </div>
                 </div>

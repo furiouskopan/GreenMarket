@@ -56,15 +56,20 @@
     {
         <form asp-controller="Products" asp-action="FeatureProduct" method="post">
             @Html.AntiForgeryToken()
+
+            <!-- Hidden input to ensure 'false' is sent if the checkbox is unchecked -->
+            <input type="hidden" id="IsFeaturedHidden" name="IsFeatured" value="false" />
+
+            <!-- Hidden input for ProductId -->
+            <input type="hidden" name="ProductId" value="@Model.ProductId" />
+
             <div class="form-group">
                 <label for="IsFeatured">Display on Home Page</label>
-                <input type="checkbox" name="IsFeatured" value="true" @(Model.Product.IsFeatured ? "checked" : "") class="form-check-input" />
+                <input type="checkbox" id="IsFeaturedCheckbox" name="IsFeatured" value="true" class="form-check-input" @(Model.IsFeatured ? "checked" : "") />
             </div>
-            <input type="hidden" name="ProductId" value="@Model.ProductId" />
             <button type="submit" class="btn btn-primary">Save</button>
         </form>
     }
-
 
     <div class="mt-5">
         <h3>Add to Cart</h3>
@@ -111,4 +116,17 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script type="text/javascript">
+        // Ensure correct value for IsFeatured
+        document.getElementById("IsFeaturedCheckbox").addEventListener("change", function () {
+            var hiddenField = document.getElementById("IsFeaturedHidden");
+            if (this.checked) {
+                // Disable the hidden field if the checkbox is checked
+                hiddenField.disabled = true;
+            } else {
+                // Re-enable the hidden field if the checkbox is unchecked
+                hiddenField.disabled = false;
+            }
+        });
+    </script>
 }

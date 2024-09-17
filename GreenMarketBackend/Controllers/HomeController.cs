@@ -4,6 +4,7 @@ using System.Diagnostics;
 using GreenMarketBackend.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using GreenMarketBackend.Data;
+using GreenMarketBackend.Models.ViewModels.ProductViewModels;
 
 namespace GreenMarketBackend.Controllers
     {
@@ -20,13 +21,24 @@ namespace GreenMarketBackend.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // Fetch the featured products
-            var featuredProducts = await _context.Products
-                                    .Where(p => p.IsFeatured)
-                                    .ToListAsync();
+            // Only select products that are available and NOT featured
+            var products = await _context.Products
+                .Where(p => p.IsAvailable && p.IsFeatured)
+                .Select(p => new FeatureProductViewModel
+                {
+                    ProductId = p.ProductId,
+                    Name = p.Name,
+                    MainImageUrl = p.Images.FirstOrDefault(i => i.IsMain != null && i.IsMain).ImageUrl ?? "default-product.png",
+                    Price = p.Price,
+                    IsFeatured = p.IsFeatured,
+                    Description = p.Description,  // Assuming Product model has a Description property
+                    Images = p.Images.ToList()
+                })
+                .ToListAsync();
 
-            return View(featuredProducts); 
+            return View(products);
         }
+
         public IActionResult About()
             {
                 return View();

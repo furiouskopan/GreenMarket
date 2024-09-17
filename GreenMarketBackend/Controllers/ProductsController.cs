@@ -274,9 +274,9 @@ namespace GreenMarketBackend.Controllers
 
             var product = await _context.Products
                 .Include(p => p.Reviews)
-                .ThenInclude(r => r.User)
+                    .ThenInclude(r => r.User)
                 .Include(p => p.CreatedByUser)
-                .Include(p => p.Images) // Include the images
+                .Include(p => p.Images)
                 .FirstOrDefaultAsync(m => m.ProductId == id);
 
             if (product == null)
@@ -287,20 +287,22 @@ namespace GreenMarketBackend.Controllers
             var viewModel = new ProductDetailsViewModel
             {
                 ProductId = product.ProductId,
-                Product = product ?? new Product(),  // Ensure the product is never null
+                Product = product,
                 Reviews = product.Reviews.ToList(),
                 NewReview = new ReviewSubmissionViewModel { ProductId = product.ProductId },
-                Uploader = product.CreatedByUser ?? new ApplicationUser(), // Set empty user if null
+                Uploader = product.CreatedByUser,
                 Images = product.Images.ToList(),
+                IsFeatured = product.IsFeatured
             };
 
             return View(viewModel);
         }
 
+        // Existing POST Details Action
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Details(ProductDetailsViewModel model)
         {
-
             if (ModelState.IsValid)
             {
                 var product = await _context.Products.FindAsync(model.ProductId);
@@ -312,11 +314,32 @@ namespace GreenMarketBackend.Controllers
                     return RedirectToAction("ProductList");
                 }
             }
+
+            // Re-populate the model before returning the view to prevent null references
+            var productEntity = await _context.Products
+                .Include(p => p.Images)
+                .Include(p => p.CreatedByUser)
+                .Include(p => p.Reviews)
+                    .ThenInclude(r => r.User)
+                .FirstOrDefaultAsync(m => m.ProductId == model.ProductId);
+
+            if (productEntity == null)
+            {
+                return NotFound();
+            }
+
+            model.Product = productEntity;
+            model.Uploader = productEntity.CreatedByUser;
+            model.Images = productEntity.Images.ToList();
+            model.Reviews = productEntity.Reviews.ToList();
+
             return View(model);
         }
+
+        // New POST Action for Featuring Products
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> FeatureProduct(FeatureProductViewModel model)
+        public async Task<IActionResult> FeatureProduct(FeatureProductFormModel model)
         {
             if (ModelState.IsValid)
             {
@@ -330,7 +353,7 @@ namespace GreenMarketBackend.Controllers
                     // Optionally, add a success message
                     TempData["SuccessMessage"] = "Product featured status updated successfully.";
 
-                    return RedirectToAction("Index"); // Assuming "Index" is your main page action
+                    return RedirectToAction("Index"); // Redirect to the main page
                 }
                 else
                 {

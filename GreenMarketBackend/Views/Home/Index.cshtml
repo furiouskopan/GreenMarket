@@ -1,4 +1,5 @@
-﻿@{
+﻿@model List<Product>
+@{
     ViewData["Title"] = "Home";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -17,38 +18,27 @@
     <div class="container my-5" id="products">
         <h2 class="text-center mb-4">Our Products</h2>
         <div class="row g-4">
-            <!-- Example Product Card -->
-            <div class="col-md-4">
-                <div class="card">
-                    <img src="https://example.com/product1.jpg" class="card-img-top" alt="Product 1"> 
-                    <div class="card-body">
-                        <h5 class="card-title">Organic Apples</h5>
-                        <p class="card-text">Freshly harvested organic apples, rich in flavor and vitamins.</p>
-                        <a href="#" class="btn btn-success">Buy Now</a>
+            @foreach (var product in Model)
+            {
+                <div class="col-md-4">
+                    <div class="card">
+                        @if (product.Images != null && product.Images.Any())
+                        {
+                            var mainImage = product.Images.FirstOrDefault(i => i.IsMain) ?? product.Images.FirstOrDefault();
+                            var imageUrl = mainImage != null ? Url.Content("~/" + mainImage.ImageUrl) : Url.Content("~/images/default-product.png");
+                            <img src="@imageUrl" class="card-img-top" alt="@product.Name">
+                        }
+                        else
+                        {
+                            <img src="~/images/default-product.png" class="card-img-top" alt="@product.Name">
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title">@product.Name</h5>
+                            <p class="card-text">@product.Description</p>
+                            <a href="#" class="btn btn-success">Buy Now</a>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card">
-                    <img src="https://example.com/product1.jpg" class="card-img-top" alt="Product 1">
-                    <div class="card-body">
-                        <h5 class="card-title">Organic Apples</h5>
-                        <p class="card-text">Freshly harvested organic apples, rich in flavor and vitamins.</p>
-                        <a href="#" class="btn btn-success">Buy Now</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <img src="https://example.com/product1.jpg" class="card-img-top" alt="Product 1"> 
-                    <div class="card-body">
-                        <h5 class="card-title">Organic Apples</h5>
-                        <p class="card-text">Freshly harvested organic apples, rich in flavor and vitamins.</p>
-                        <a href="#" class="btn btn-success">Buy Now</a>
-                    </div>
-                </div>
-            </div>
+            }
         </div>
-    </div>
 </div>

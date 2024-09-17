@@ -52,6 +52,20 @@
         </div>
     </div>
 
+    @if (User.IsInRole("Admin"))
+    {
+        <form asp-controller="Products" asp-action="FeatureProduct" method="post">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label for="IsFeatured">Display on Home Page</label>
+                <input type="checkbox" name="IsFeatured" value="true" @(Model.Product.IsFeatured ? "checked" : "") class="form-check-input" />
+            </div>
+            <input type="hidden" name="ProductId" value="@Model.ProductId" />
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+    }
+
+
     <div class="mt-5">
         <h3>Add to Cart</h3>
         <form asp-controller="Cart" asp-action="AddToCart" method="post">

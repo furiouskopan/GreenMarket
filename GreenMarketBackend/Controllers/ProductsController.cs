@@ -276,7 +276,7 @@ namespace GreenMarketBackend.Controllers
                 .Include(p => p.Reviews)
                 .ThenInclude(r => r.User)
                 .Include(p => p.CreatedByUser)
-                .Include(p => p.Images)  // Include the images
+                .Include(p => p.Images) // Include the images
                 .FirstOrDefaultAsync(m => m.ProductId == id);
 
             if (product == null)
@@ -287,18 +287,63 @@ namespace GreenMarketBackend.Controllers
             var viewModel = new ProductDetailsViewModel
             {
                 ProductId = product.ProductId,
-                Product = product,
+                Product = product ?? new Product(),  // Ensure the product is never null
                 Reviews = product.Reviews.ToList(),
                 NewReview = new ReviewSubmissionViewModel { ProductId = product.ProductId },
-                Uploader = product.CreatedByUser,
-                Images = product.Images.ToList(),  // Add images to the view model
-                //MainImageUrl = product.MainImageUrl  // Set the main image URL
+                Uploader = product.CreatedByUser ?? new ApplicationUser(), // Set empty user if null
+                Images = product.Images.ToList(),
             };
 
             return View(viewModel);
         }
 
+        [HttpPost]
+        public async Task<IActionResult> Details(ProductDetailsViewModel model)
+        {
 
+            if (ModelState.IsValid)
+            {
+                var product = await _context.Products.FindAsync(model.ProductId);
+                if (product != null)
+                {
+                    product.IsFeatured = model.IsFeatured;
+                    _context.Update(product);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction("ProductList");
+                }
+            }
+            return View(model);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> FeatureProduct(FeatureProductViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var product = await _context.Products.FindAsync(model.ProductId);
+                if (product != null)
+                {
+                    product.IsFeatured = model.IsFeatured;
+                    _context.Update(product);
+                    await _context.SaveChangesAsync();
+
+                    // Optionally, add a success message
+                    TempData["SuccessMessage"] = "Product featured status updated successfully.";
+
+                    return RedirectToAction("Index"); // Assuming "Index" is your main page action
+                }
+                else
+                {
+                    // Handle the case where the product is not found
+                    TempData["ErrorMessage"] = "Product not found.";
+                    return RedirectToAction("Index");
+                }
+            }
+
+            // If ModelState is invalid, redirect back with an error
+            TempData["ErrorMessage"] = "Invalid data submitted.";
+            return RedirectToAction("Index");
+        }
         // GET: Products/MyProducts
         public async Task<IActionResult> MyProducts()
         {

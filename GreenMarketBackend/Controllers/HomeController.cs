@@ -2,23 +2,32 @@ using GreenMarketBackend.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using GreenMarketBackend.Models.ViewModels;
+using Microsoft.EntityFrameworkCore;
+using GreenMarketBackend.Data;
 
 namespace GreenMarketBackend.Controllers
     {
         public class HomeController : Controller
         {
             private readonly ILogger<HomeController> _logger;
+            private readonly ApplicationDbContext _context;
 
-            public HomeController(ILogger<HomeController> logger)
+        public HomeController(ApplicationDbContext context, ILogger<HomeController> logger)
             {
                 _logger = logger;
+                _context = context;
             }
 
-            public IActionResult Index()
-            {
-                return View();
-            }
-            public IActionResult About()
+        public async Task<IActionResult> Index()
+        {
+            // Fetch the featured products
+            var featuredProducts = await _context.Products
+                                    .Where(p => p.IsFeatured)
+                                    .ToListAsync();
+
+            return View(featuredProducts); 
+        }
+        public IActionResult About()
             {
                 return View();
             }

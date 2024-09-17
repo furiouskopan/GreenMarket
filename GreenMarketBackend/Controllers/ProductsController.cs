@@ -39,10 +39,9 @@ namespace GreenMarketBackend.Controllers
             var parentCategories = await _context.Categories.Where(c => c.ParentCategoryId == null).ToListAsync();
             var childCategories = Enumerable.Empty<Category>();
 
-            // Include Images along with Category
             IQueryable<Product> productsQuery = _context.Products
                 .Include(p => p.Category)
-                .Include(p => p.Images); // Make sure images are included in the query
+                .Include(p => p.Images);
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
@@ -172,52 +171,6 @@ namespace GreenMarketBackend.Controllers
             return Path.Combine("images", uniqueFileName);
         }
 
-        // Handles file upload for product images
-        //private string UploadedFile(ProductViewModel model)
-        //{
-        //    string uniqueFileName = null;
-
-        //    if (model.ImageFile != null)
-        //    {
-        //        string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
-        //        uniqueFileName = Guid.NewGuid().ToString() + "_" + model.ImageFile.FileName;
-        //        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-        //        using (var fileStream = new FileStream(filePath, FileMode.Create))
-        //        {
-        //            model.ImageFile.CopyTo(fileStream);
-        //        }
-        //    }
-
-        //    return uniqueFileName;
-        //}
-
-        //// Displays the delete confirmation page
-        //public async Task<IActionResult> Delete(int? id)
-        //{
-        //    if (id == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    var product = await _context.Products.FirstOrDefaultAsync(m => m.ProductId == id);
-        //    if (product == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return View(product);
-        //}
-
-        //// Handles the POST request to delete a product
-        //[HttpPost, ActionName("Delete")]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> DeleteConfirmed(int id)
-        //{
-        //    var product = await _context.Products.FindAsync(id);
-        //    _context.Products.Remove(product);
-        //    await _context.SaveChangesAsync();
-        //    return RedirectToAction(nameof(Index));
-        //}
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
@@ -420,18 +373,30 @@ namespace GreenMarketBackend.Controllers
             return RedirectToAction(nameof(Details), new { id = model.ProductId });
         }
         // GET: Products/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Images)
+                .FirstOrDefaultAsync(p => p.ProductId == id);
 
-            var product = await _context.Products.Include(p => p.Images).FirstOrDefaultAsync(p => p.ProductId == id);
             if (product == null)
             {
                 return NotFound();
             }
+
+            var parentCategories = await _context.Categories
+                .Where(c => c.ParentCategoryId == null)
+                .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
+                .ToListAsync();
+
+            var childCategories = product.Category.ParentCategoryId.HasValue
+                ? await _context.Categories
+                    .Where(c => c.ParentCategoryId == product.Category.ParentCategoryId)
+                    .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
+                    .ToListAsync()
+                : Enumerable.Empty<SelectListItem>();
 
             var viewModel = new ProductEditViewModel
             {
@@ -444,12 +409,13 @@ namespace GreenMarketBackend.Controllers
                 Pesticides = product.Pesticides,
                 Origin = product.Origin,
                 HarvestDate = product.HarvestDate,
-                CategoryId = product.CategoryId,
                 CreatedDate = product.CreatedDate,
-                MainImageUrl = product.Images.FirstOrDefault(i => i.IsMain)?.ImageUrl
+                ParentCategoryId = product.Category.ParentCategoryId,
+                ChildCategoryId = product.CategoryId,
+                ParentCategories = parentCategories,
+                ChildCategories = childCategories
             };
 
-            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", product.CategoryId);
             return View(viewModel);
         }
 
@@ -481,7 +447,8 @@ namespace GreenMarketBackend.Controllers
                     product.Pesticides = model.Pesticides;
                     product.Origin = model.Origin;
                     product.HarvestDate = model.HarvestDate;
-                    product.CategoryId = model.CategoryId;
+                    product.CategoryId = model.ParentCategoryId.Value;
+                    product.CategoryId = model.ChildCategoryId.Value;
 
                     // Remove selected images
                     if (RemoveImages != null && RemoveImages.Any())
@@ -530,7 +497,19 @@ namespace GreenMarketBackend.Controllers
             }
 
             // Reload categories if model state is invalid
-            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", model.CategoryId);
+            model.ParentCategories = await _context.Categories
+            .Where(c => c.ParentCategoryId == null)
+            .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
+            .ToListAsync();
+
+            if (model.ParentCategoryId.HasValue)
+            {
+                model.ChildCategories = await _context.Categories
+                    .Where(c => c.ParentCategoryId == model.ParentCategoryId)
+                    .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
+                    .ToListAsync();
+            }
+
             return View(model);
         }
 

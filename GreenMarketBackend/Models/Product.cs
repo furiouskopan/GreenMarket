@@ -66,5 +66,6 @@ namespace GreenMarketBackend.Models
         public double AverageRating { get; set; }
 
         public int ReviewCount { get; set; }
+        public bool IsFeatured { get; set; }
     }
 }

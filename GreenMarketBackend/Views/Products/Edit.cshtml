@@ -84,10 +84,21 @@
                 <span asp-validation-for="HarvestDate" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="CategoryId" class="control-label"></label>
-                <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.Categories"></select>
-                <span asp-validation-for="CategoryId" class="text-danger"></span>
+                <label for="ParentCategoryId" class="control-label">Parent Category</label>
+                <select asp-for="ParentCategoryId" asp-items="Model.ParentCategories" class="form-control" id="ParentCategoryId">
+                    <option value="">Select Parent Category</option>
+                </select>
+                <span asp-validation-for="ParentCategoryId" class="text-danger"></span>
             </div>
+
+            <div class="form-group">
+                <label for="ChildCategoryId" class="control-label">Child Category</label>
+                <select asp-for="ChildCategoryId" asp-items="Model.ChildCategories" class="form-control" id="ChildCategoryId">
+                    <option value="">Select Child Category</option>
+                </select>
+                <span asp-validation-for="ChildCategoryId" class="text-danger"></span>
+            </div>
+
             <button type="submit" class="btn btn-primary">Save</button>
             <a asp-action="MyProducts" class="btn btn-secondary">Cancel</a>
         </form>

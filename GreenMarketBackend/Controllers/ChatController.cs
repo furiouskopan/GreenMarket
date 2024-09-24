@@ -124,6 +124,29 @@ namespace GreenMarketBackend.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> MarkMessagesAsRead()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+            {
+                return BadRequest("User not authenticated.");
+            }
+
+            var unreadMessages = await _context.Messages
+                .Where(m => (m.ChatSession.User1Id == userId || m.ChatSession.User2Id == userId) && !m.IsRead && m.SenderId != userId)
+                .ToListAsync();
+
+            foreach (var message in unreadMessages)
+            {
+                message.IsRead = true;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        [HttpPost]
         public async Task<IActionResult> DeleteChatSession([FromBody] DeleteChatSessionRequest request)
         {
             var chatSession = await _context.ChatSessions

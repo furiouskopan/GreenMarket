@@ -42,7 +42,9 @@
                             <a class="nav-link" asp-controller="Home" asp-action="Contact">Contact</a>
                         </li>
                         <li class="nav-item">
-                            <a id="chatLink" class="nav-link" asp-controller="Chat" asp-action="Index">Chat</a>
+                            <a class="nav-link" asp-controller="Chat" asp-action="Index">
+                                Chat <span class="unread-counter" style="display: none;"></span>
+                            </a>
                         </li>
                         @if (User.Identity.IsAuthenticated)
                         {

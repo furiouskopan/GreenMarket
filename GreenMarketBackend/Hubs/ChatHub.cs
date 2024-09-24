@@ -36,7 +36,7 @@ namespace GreenMarketBackend.Hubs
         {
             if (string.IsNullOrWhiteSpace(message))
             {
-                throw new ArgumentException("Message content cannot be emptyHUB", nameof(message));
+                throw new ArgumentException("Message content cannot be empty", nameof(message));
             }
 
             var connectionId = _connections.FirstOrDefault(x => x.Value == toUser).Key;
@@ -48,6 +48,7 @@ namespace GreenMarketBackend.Hubs
             {
                 Console.WriteLine("Recipient not connected: " + toUser);
             }
+
             var sender = await _context.Users.FirstOrDefaultAsync(u => u.UserName == user);
             var recipient = await _context.Users.FirstOrDefaultAsync(u => u.UserName == toUser);
             var chatSession = await _context.ChatSessions
@@ -71,12 +72,22 @@ namespace GreenMarketBackend.Hubs
                 Content = message,
                 Timestamp = DateTime.Now,
                 SenderId = sender.Id,
-                ChatSessionId = chatSession.Id
+                ChatSessionId = chatSession.Id,
+                IsRead = false // New message is unread by default
             };
 
             chatSession.Messages.Add(newMessage);
             _context.Messages.Add(newMessage);
             await _context.SaveChangesAsync();
+
+            // Optionally notify user about unread messages count
+            var unreadMessagesCount = await _context.Messages
+                .CountAsync(m => m.ChatSessionId == chatSession.Id && m.SenderId != recipient.Id && !m.IsRead);
+
+            if (connectionId != null)
+            {
+                await Clients.Client(connectionId).SendAsync("UpdateUnreadMessagesCount", unreadMessagesCount);
+            }
         }
     }
 }

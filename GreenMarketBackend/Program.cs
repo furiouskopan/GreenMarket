@@ -62,7 +62,18 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHub<ChatHub>("/chatHub");
+//app.MapHub<ChatHub>("/chatHub");
+
+app.UseEndpoints(endpoints =>
+{
+    // Map the ChatHub to the /chatHub endpoint
+    endpoints.MapHub<ChatHub>("/chatHub");
+
+    // Default route for controllers
+    endpoints.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Home}/{action=Index}/{id?}");
+});
 
 app.MapControllerRoute(
     name: "default",

@@ -146,6 +146,36 @@
                     session.querySelector('.messages-list').appendChild(div);
                 }
             });
+
+            // Show a browser notification
+            if (document.hidden) {  // Show notification if user is not on the page
+                alert("You have a new message from " + user);
+            }
+        });
+
+        connection.on("UpdateUnreadMessagesCount", function (count) {
+            const chatLink = document.querySelector('.nav-link[asp-controller="Chat"]');
+            let counter = chatLink.querySelector('.unread-counter');
+
+            if (!counter) {
+                counter = document.createElement('span');
+                counter.classList.add('unread-counter');
+                counter.style.cssText = `
+                            background: red;
+                            color: white;
+                            border-radius: 50%;
+                            padding: 2px 6px;
+                            margin-left: 5px;
+                        `;
+                chatLink.appendChild(counter);
+            }
+
+            counter.textContent = count;
+
+            // Hide the counter if count is 0
+            if (count === 0) {
+                counter.remove();
+            }
         });
 
         connection.start().then(() => console.log('Connected to hub')).catch(err => console.error('Error connecting to hub:', err));
@@ -209,7 +239,6 @@
                 });
             }
         }
-
     </script>
 
     <input type="hidden" id="antiForgeryToken" name="__RequestVerificationToken" value="@antiForgeryToken" />

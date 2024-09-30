@@ -31,9 +31,9 @@ footer {
     width: 100%;
 }
 
-    footer p {
-        margin: 0;
-    }
+footer p {
+    margin: 0;
+}
 
 .navbarAcc {
     background-color: #18871e; /* Green background for the navbar */
@@ -43,7 +43,6 @@ footer {
     color: white !important;
     text-decoration: none;
 }
-
 
 .google-btn {
     display: inline-flex;
@@ -61,11 +60,11 @@ footer {
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-    .google-btn:hover {
-        background-color: #f5f5f5;
-        border-color: #ccc;
-        color: #333;
-    }
+.google-btn:hover {
+    background-color: #f5f5f5;
+    border-color: #ccc;
+    color: #333;
+}
 
 .google-icon {
     height: 20px;
@@ -113,6 +112,6 @@ input[type="text"] {
     cursor: pointer;
 }
 
-    #sendButton:hover {
-        background-color: #0056b3;
-    }
+#sendButton:hover {
+    background-color: #0056b3;
+}

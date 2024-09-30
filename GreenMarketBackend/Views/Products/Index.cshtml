@@ -97,7 +97,7 @@
         <div id="productList" class="row g-4">
             @foreach (var product in Model.Products)
             {
-                <div class="col-md-4 product-card" data-category="@product.Category.Name" data-price="@product.Price">
+                <div class="col-md-3 product-card" data-category="@product.Category.Name" data-price="@product.Price">
                     <div class="card">
                         <a asp-action="Details" asp-route-id="@product.ProductId" class="text-decoration-none text-dark">
                             @if (product.Images != null && product.Images.Any())

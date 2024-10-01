@@ -172,6 +172,17 @@
                     $('#productIdInput').val(productId);
                 });
             });
+
+            document.getElementById('parentCategory').addEventListener('change', function () {
+                var parentCategoryId = this.value;
+                var childCategoryDropdown = document.getElementById('childCategory');
+
+                // Reset child category to "All" when parent category changes
+                childCategoryDropdown.value = '';
+
+                // Submit the form after resetting
+                this.form.submit();
+            });
         </script>
 
         <script>

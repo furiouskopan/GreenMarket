@@ -37,8 +37,8 @@ namespace GreenMarketBackend.Controllers
         public async Task<IActionResult> Index(int? parentCategoryId, int? childCategoryId, string sortOrder, string search)
         {
             var parentCategories = await _context.Categories
-                .Where(c => c.ParentCategoryId == null)
-                .ToListAsync();
+    .Where(c => c.ParentCategoryId == null)
+    .ToListAsync();
 
             var childCategories = Enumerable.Empty<Category>();
 

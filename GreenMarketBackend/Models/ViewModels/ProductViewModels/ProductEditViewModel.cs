@@ -49,10 +49,9 @@ namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
         [Required]
         public int? ChildCategoryId { get; set; }
 
-        public IEnumerable<SelectListItem> ParentCategories { get; set; }
-        public IEnumerable<SelectListItem> ChildCategories { get; set; }
-
         public DateTime CreatedDate { get; set; }
+        public IEnumerable<SelectListItem>? ParentCategories { get; set; }
+        public IEnumerable<SelectListItem>? ChildCategories { get; set; }
 
         public bool IsRemovingExistingImage { get; set; } // For handling image removals
     }

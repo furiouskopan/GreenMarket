@@ -533,11 +533,29 @@ namespace GreenMarketBackend.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, ProductEditViewModel model, List<string> RemoveImages)
         {
-            if (id != model.ProductId)
-            {
-                return NotFound();
-            }
+            // Repopulate categories before checking the ModelState
+            model.ParentCategories = await _context.Categories
+                .Where(c => c.ParentCategoryId == null)
+                .Select(c => new SelectListItem
+                {
+                    Value = c.CategoryId.ToString(),
+                    Text = c.Name,
+                    Selected = c.CategoryId == model.ParentCategoryId // Maintain selection if it was set
+                })
+                .ToListAsync();
 
+            if (model.ParentCategoryId.HasValue)
+            {
+                model.ChildCategories = await _context.Categories
+                    .Where(c => c.ParentCategoryId == model.ParentCategoryId)
+                    .Select(c => new SelectListItem
+                    {
+                        Value = c.CategoryId.ToString(),
+                        Text = c.Name,
+                        Selected = c.CategoryId == model.ChildCategoryId // Maintain selection if it was set
+                    })
+                    .ToListAsync();
+            }
             if (ModelState.IsValid)
             {
                 try
@@ -609,6 +627,8 @@ namespace GreenMarketBackend.Controllers
 
                     _context.Update(product);
                     await _context.SaveChangesAsync();
+
+                    return RedirectToAction(nameof(MyProducts));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -621,31 +641,47 @@ namespace GreenMarketBackend.Controllers
                         throw;
                     }
                 }
-                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+            }
+            else
+            {
+                // Log ModelState errors for debugging
+                foreach (var state in ModelState)
                 {
-                    Console.WriteLine(error.ErrorMessage);
+                    foreach (var error in state.Value.Errors)
+                    {
+                        // Log or inspect the errors
+                        Console.WriteLine($"Key: {state.Key}, Error: {error.ErrorMessage}");
+                    }
                 }
-
-                return RedirectToAction(nameof(MyProducts));
             }
 
-            // If the model state is invalid, reload the categories
+            // If the model state is invalid, reload categories to retain the selection
             model.ParentCategories = await _context.Categories
                 .Where(c => c.ParentCategoryId == null)
-                .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
+                .Select(c => new SelectListItem
+                {
+                    Value = c.CategoryId.ToString(),
+                    Text = c.Name,
+                    Selected = c.CategoryId == model.ParentCategoryId // Maintain selection if it was set
+                })
                 .ToListAsync();
 
+            // Load child categories if ParentCategoryId is set
             if (model.ParentCategoryId.HasValue)
             {
                 model.ChildCategories = await _context.Categories
                     .Where(c => c.ParentCategoryId == model.ParentCategoryId)
-                    .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
+                    .Select(c => new SelectListItem
+                    {
+                        Value = c.CategoryId.ToString(),
+                        Text = c.Name,
+                        Selected = c.CategoryId == model.ChildCategoryId // Maintain selection if it was set
+                    })
                     .ToListAsync();
             }
 
             return View(model);
         }
-
         //[HttpGet]
         //public async Task<JsonResult> GetChildCategories(int parentCategoryId)
         //{

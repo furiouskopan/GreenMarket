@@ -61,7 +61,6 @@
                     }
                 </div>
 
-
             <!-- Upload new images -->
             <div class="form-group mb-3">
                 <label class="form-label">Add New Images</label>
@@ -109,4 +108,20 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        $(document).ready(function () {
+            $('#ParentCategoryId').change(function () {
+                var parentId = $(this).val();
+                $.get('/Categories/GetChildCategories', { parentCategoryId: parentId }, function (data) {
+                    var childCategorySelect = $('#ChildCategoryId');
+                    childCategorySelect.empty(); // Clear the dropdown
+                    childCategorySelect.append('<option value="">Select Child Category</option>');
+
+                    $.each(data, function (index, category) {
+                        childCategorySelect.append('<option value="' + category.value + '">' + category.text + '</option>');
+                    });
+                });
+            });
+        });
+    </script>
 }

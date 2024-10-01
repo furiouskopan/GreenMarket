@@ -483,18 +483,30 @@ namespace GreenMarketBackend.Controllers
                 return NotFound();
             }
 
+            // Load parent categories (categories that have no parent)
             var parentCategories = await _context.Categories
                 .Where(c => c.ParentCategoryId == null)
-                .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
+                .Select(c => new SelectListItem
+                {
+                    Value = c.CategoryId.ToString(),
+                    Text = c.Name,
+                    Selected = c.CategoryId == product.Category.ParentCategoryId
+                })
                 .ToListAsync();
 
+            // Load child categories for the current product's parent category
             var childCategories = product.Category.ParentCategoryId.HasValue
                 ? await _context.Categories
                     .Where(c => c.ParentCategoryId == product.Category.ParentCategoryId)
-                    .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
+                    .Select(c => new SelectListItem
+                    {
+                        Value = c.CategoryId.ToString(),
+                        Text = c.Name
+                    })
                     .ToListAsync()
                 : Enumerable.Empty<SelectListItem>();
 
+            // Create the ViewModel
             var viewModel = new ProductEditViewModel
             {
                 ProductId = product.ProductId,
@@ -503,6 +515,7 @@ namespace GreenMarketBackend.Controllers
                 Price = product.Price,
                 StockQuantity = product.StockQuantity,
                 ExistingImageUrls = product.Images.Select(i => i.ImageUrl).ToList(),
+                MainImageUrl = product.Images.FirstOrDefault(i => i.IsMain)?.ImageUrl,
                 Pesticides = product.Pesticides,
                 Origin = product.Origin,
                 HarvestDate = product.HarvestDate,
@@ -515,7 +528,6 @@ namespace GreenMarketBackend.Controllers
 
             return View(viewModel);
         }
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -530,7 +542,11 @@ namespace GreenMarketBackend.Controllers
             {
                 try
                 {
-                    var product = await _context.Products.Include(p => p.Images).FirstOrDefaultAsync(p => p.ProductId == id);
+                    var product = await _context.Products
+                        .Include(p => p.Images)
+                        .Include(p => p.Category)
+                        .FirstOrDefaultAsync(p => p.ProductId == id);
+
                     if (product == null)
                     {
                         return NotFound();
@@ -544,10 +560,25 @@ namespace GreenMarketBackend.Controllers
                     product.Pesticides = model.Pesticides;
                     product.Origin = model.Origin;
                     product.HarvestDate = model.HarvestDate;
-                    product.CategoryId = model.ParentCategoryId.Value;
-                    product.CategoryId = model.ChildCategoryId.Value;
 
-                    // Remove selected images
+                    // Handle categories: set Parent and Child Category correctly
+                    if (model.ParentCategoryId.HasValue)
+                    {
+                        // Find the parent category
+                        var parentCategory = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryId == model.ParentCategoryId);
+                        if (parentCategory != null)
+                        {
+                            product.Category.ParentCategoryId = parentCategory.CategoryId;
+                        }
+                    }
+
+                    if (model.ChildCategoryId.HasValue)
+                    {
+                        // Set the child category
+                        product.CategoryId = model.ChildCategoryId.Value;
+                    }
+
+                    // Handle image removals
                     if (RemoveImages != null && RemoveImages.Any())
                     {
                         foreach (var imageUrl in RemoveImages)
@@ -560,7 +591,7 @@ namespace GreenMarketBackend.Controllers
                         }
                     }
 
-                    // Handle new image uploads (add to the existing images)
+                    // Handle new image uploads (add new images)
                     if (model.ImageFiles != null && model.ImageFiles.Count > 0)
                     {
                         foreach (var imageFile in model.ImageFiles.Take(5)) // Limit to 5 images
@@ -590,14 +621,19 @@ namespace GreenMarketBackend.Controllers
                         throw;
                     }
                 }
+                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    Console.WriteLine(error.ErrorMessage);
+                }
+
                 return RedirectToAction(nameof(MyProducts));
             }
 
-            // Reload categories if model state is invalid
+            // If the model state is invalid, reload the categories
             model.ParentCategories = await _context.Categories
-            .Where(c => c.ParentCategoryId == null)
-            .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
-            .ToListAsync();
+                .Where(c => c.ParentCategoryId == null)
+                .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
+                .ToListAsync();
 
             if (model.ParentCategoryId.HasValue)
             {
@@ -610,6 +646,20 @@ namespace GreenMarketBackend.Controllers
             return View(model);
         }
 
+        //[HttpGet]
+        //public async Task<JsonResult> GetChildCategories(int parentCategoryId)
+        //{
+        //    var childCategories = await _context.Categories
+        //        .Where(c => c.ParentCategoryId == parentCategoryId)
+        //        .Select(c => new SelectListItem
+        //        {
+        //            Value = c.CategoryId.ToString(),
+        //            Text = c.Name
+        //        })
+        //        .ToListAsync();
+
+        //    return Json(childCategories);
+        //}
 
         private bool ProductExists(int id)
         {

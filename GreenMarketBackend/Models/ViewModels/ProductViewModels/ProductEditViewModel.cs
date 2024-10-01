@@ -33,7 +33,7 @@ namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
 
         // URL of the selected main image
         [Required]
-        public string MainImageUrl { get; set; }  // <-- This is the new property
+        public string MainImageUrl { get; set; }
 
         [Required]
         public string Pesticides { get; set; }

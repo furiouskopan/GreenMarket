@@ -36,7 +36,10 @@ namespace GreenMarketBackend.Controllers
         // Displays a list of products with optional filtering by category and sorting
         public async Task<IActionResult> Index(int? parentCategoryId, int? childCategoryId, string sortOrder, string search)
         {
-            var parentCategories = await _context.Categories.Where(c => c.ParentCategoryId == null).ToListAsync();
+            var parentCategories = await _context.Categories
+                .Where(c => c.ParentCategoryId == null)
+                .ToListAsync();
+
             var childCategories = Enumerable.Empty<Category>();
 
             IQueryable<Product> productsQuery = _context.Products
@@ -49,21 +52,44 @@ namespace GreenMarketBackend.Controllers
                 productsQuery = productsQuery.Where(p => p.Name.Contains(search));
             }
 
+            // If parentCategoryId is null (i.e., "All" selected), reset childCategoryId
+            if (!parentCategoryId.HasValue)
+            {
+                childCategoryId = null; // Clear child category when "All" is selected for parent
+            }
+
+            // Apply child category filter if provided
             if (childCategoryId.HasValue)
             {
                 productsQuery = productsQuery.Where(p => p.CategoryId == childCategoryId);
-                childCategories = await _context.Categories.Where(c => c.ParentCategoryId == parentCategoryId).ToListAsync();
+                // Also load child categories for the selected parent category
+                childCategories = await _context.Categories
+                    .Where(c => c.ParentCategoryId == parentCategoryId)
+                    .ToListAsync();
             }
+            // Apply parent category filter if provided (but no child category selected)
             else if (parentCategoryId.HasValue)
             {
-                childCategories = await _context.Categories.Where(c => c.ParentCategoryId == parentCategoryId).ToListAsync();
                 productsQuery = productsQuery.Where(p => p.Category.ParentCategoryId == parentCategoryId);
+                // Load child categories based on selected parent category
+                childCategories = await _context.Categories
+                    .Where(c => c.ParentCategoryId == parentCategoryId)
+                    .ToListAsync();
             }
 
+            // Apply sorting
             switch (sortOrder)
             {
-                case "asc": productsQuery = productsQuery.OrderBy(p => p.Price); break;
-                case "desc": productsQuery = productsQuery.OrderByDescending(p => p.Price); break;
+                case "asc":
+                    productsQuery = productsQuery.OrderBy(p => p.Price);
+                    break;
+                case "desc":
+                    productsQuery = productsQuery.OrderByDescending(p => p.Price);
+                    break;
+                default:
+                    // Default sorting (by name, or any other field)
+                    productsQuery = productsQuery.OrderBy(p => p.Name);
+                    break;
             }
 
             var products = await productsQuery.ToListAsync();
@@ -75,11 +101,14 @@ namespace GreenMarketBackend.Controllers
                 Products = products,
                 SelectedParentCategoryId = parentCategoryId,
                 SelectedChildCategoryId = childCategoryId,
-                Search = search
+                Search = search,
+                //SortOrder = sortOrder // This can be useful for maintaining the selected sorting option in the view
             };
 
+            // Return the view with the populated view model
             return View(viewModel);
         }
+
 
         // Returns the view for creating a new product
         public IActionResult Create()

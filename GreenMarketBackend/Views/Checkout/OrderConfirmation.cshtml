@@ -1,25 +1,26 @@
 ﻿@using GreenMarketBackend.Models.ViewModels.OrderViewModels;
 
-
 @{
     ViewData["Title"] = "Order Confirmation";
 }
 
 <h2>Order Confirmation</h2>
 
-<p>Thank you for your order!</p>
+<p>Thank you for your order! Below are your order details:</p>
 
-<h3>Order Details</h3>
-<p>Order ID: @Model.OrderId</p>
-<p>Order Date: @Model.OrderDate</p>
-<p>Total Amount: @Model.TotalAmount.ToString("C")</p>
-<p>Shipping Address: @Model.ShippingAddress</p>
-<p>Payment Method: @Model.PaymentMethod</p>
-<p>Status: @Model.Status</p>
+<h3>Order Summary</h3>
+<div>
+    <p><strong>Order ID:</strong> @Model.OrderId</p>
+    <p><strong>Order Date:</strong> @Model.OrderDate.ToString("f")</p>
+    <p><strong>Total Amount:</strong> @Model.TotalAmount.ToString("C")</p>
+    <p><strong>Shipping Address:</strong> @Model.ShippingAddress</p>
+    <p><strong>Payment Method:</strong> @Model.PaymentMethod</p>
+    <p><strong>Status:</strong> @Model.Status</p>
+</div>
 
 <h3>Order Items</h3>
-<table class="table">
-    <thead>
+<table class="table table-bordered">
+    <thead class="thead-light">
         <tr>
             <th>Product</th>
             <th>Quantity</th>
@@ -39,3 +40,18 @@
         }
     </tbody>
 </table>
+
+<h3>Seller Contact Information</h3>
+<div>
+    @foreach (var seller in Model.Sellers)
+    {
+        <div>
+            <p><strong>Seller Name:</strong> @seller.UserName</p>
+            <p><strong>Email:</strong> @seller.Email</p>
+            <p><strong>Phone:</strong> @(string.IsNullOrEmpty(seller.PhoneNumber) ? "Not provided" : seller.PhoneNumber)</p>
+            <hr />
+        </div>
+    }
+</div>
+
+<p>If you have any questions, please contact the seller directly.</p>

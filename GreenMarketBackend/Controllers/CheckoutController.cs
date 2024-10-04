@@ -7,8 +7,6 @@ using GreenMarketBackend.Data;
 using GreenMarketBackend.Models;
 using GreenMarketBackend.Models.ViewModels;
 using System;
-using MailKit.Net.Smtp;
-using MimeKit;
 using GreenMarketBackend.Models.ViewModels.CartViewModels;
 using GreenMarketBackend.Models.ViewModels.OrderViewModels;
 using Microsoft.AspNetCore.Identity;
@@ -18,11 +16,13 @@ public class CheckoutController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly EmailService _emailService;
 
-    public CheckoutController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public CheckoutController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, EmailService emailService)
     {
         _context = context;
         _userManager = userManager;
+        _emailService = emailService;
     }
 
     public async Task<IActionResult> Index()
@@ -30,7 +30,7 @@ public class CheckoutController : Controller
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var cart = await _context.Carts
             .Include(c => c.CartItems)
-            .ThenInclude(ci => ci.Product)
+                .ThenInclude(ci => ci.Product)
             .FirstOrDefaultAsync(c => c.UserId == userId);
 
         if (cart == null || !cart.CartItems.Any())
@@ -61,62 +61,82 @@ public class CheckoutController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ProcessOrder(CheckoutViewModel model)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var cart = await _context.Carts
-                .Include(c => c.CartItems)
-                .ThenInclude(ci => ci.Product)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
-
-            if (cart == null || !cart.CartItems.Any())
-            {
-                return RedirectToAction("Index", "Cart");
-            }
-
-            var order = new Order
-            {
-                UserId = userId,
-                OrderDate = DateTime.Now,
-                TotalAmount = cart.CartItems.Sum(ci => ci.Quantity * ci.Product.Price),
-                ShippingAddress = model.Address,
-                PaymentMethod = model.PaymentMethod,
-                Status = OrderStatus.Pending,
-                OrderItems = cart.CartItems.Select(ci => new OrderItem
-                {
-                    ProductId = ci.ProductId,
-                    Quantity = ci.Quantity,
-                    PriceAtTimeOfPurchase = ci.Product.Price
-                }).ToList()
-            };
-
-            _context.Orders.Add(order);
-            _context.CartItems.RemoveRange(cart.CartItems);
-            await _context.SaveChangesAsync();
-
-            // Send email confirmation
-            await SendOrderConfirmationEmail(order);
-
-            return RedirectToAction("OrderConfirmation", new { orderId = order.OrderId });
+            return await RebuildCartView(model);
         }
 
-        var userCart = await _context.Carts
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var cart = await _context.Carts
             .Include(c => c.CartItems)
-            .ThenInclude(ci => ci.Product)
-            .FirstOrDefaultAsync(c => c.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier));
+                .ThenInclude(ci => ci.Product)
+            .FirstOrDefaultAsync(c => c.UserId == userId);
+
+        if (cart == null || !cart.CartItems.Any())
+        {
+            return RedirectToAction("Index", "Cart");
+        }
+
+        // Create Order
+        var order = CreateOrderFromCart(cart, userId, model.Address, model.PaymentMethod);
+
+        _context.Orders.Add(order);
+        _context.CartItems.RemoveRange(cart.CartItems);
+        await _context.SaveChangesAsync();
+
+        // Send buyer confirmation email
+        await SendOrderConfirmationEmail(order);
+
+        // Send notifications to sellers
+        await SendSellerNotificationEmails(order);
+
+        return RedirectToAction("OrderConfirmation", new { orderId = order.OrderId });
+    }
+
+    private Order CreateOrderFromCart(Cart cart, string userId, string shippingAddress, string paymentMethod)
+    {
+        return new Order
+        {
+            UserId = userId,
+            OrderDate = DateTime.Now,
+            TotalAmount = cart.CartItems.Sum(ci => ci.Quantity * ci.Product.Price),
+            ShippingAddress = shippingAddress,
+            PaymentMethod = paymentMethod,
+            Status = OrderStatus.Pending,
+            OrderItems = cart.CartItems.Select(ci => new OrderItem
+            {
+                ProductId = ci.ProductId,
+                Quantity = ci.Quantity,
+                PriceAtTimeOfPurchase = ci.Product.Price
+            }).ToList()
+        };
+    }
+
+    private async Task<IActionResult> RebuildCartView(CheckoutViewModel model)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var cart = await _context.Carts
+            .Include(c => c.CartItems)
+                .ThenInclude(ci => ci.Product)
+            .FirstOrDefaultAsync(c => c.UserId == userId);
+
+        if (cart == null || !cart.CartItems.Any())
+        {
+            return RedirectToAction("Index", "Cart");
+        }
 
         var cartViewModel = new CheckoutViewModel
         {
             Address = model.Address,
             PaymentMethod = model.PaymentMethod,
-            CartItems = userCart.CartItems.Select(ci => new CartItemViewModel
+            CartItems = cart.CartItems.Select(ci => new CartItemViewModel
             {
                 CartItemId = ci.CartItemId,
                 ProductName = ci.Product.Name,
                 Quantity = ci.Quantity,
                 Price = ci.Product.Price
             }).ToList(),
-            TotalAmount = userCart.CartItems.Sum(ci => ci.Quantity * ci.Product.Price)
+            TotalAmount = cart.CartItems.Sum(ci => ci.Quantity * ci.Product.Price)
         };
 
         return View("Index", cartViewModel);
@@ -126,7 +146,8 @@ public class CheckoutController : Controller
     {
         var order = await _context.Orders
             .Include(o => o.OrderItems)
-            .ThenInclude(oi => oi.Product)
+                .ThenInclude(oi => oi.Product)
+                    .ThenInclude(p => p.CreatedByUser)
             .FirstOrDefaultAsync(o => o.OrderId == orderId);
 
         if (order == null)
@@ -154,28 +175,50 @@ public class CheckoutController : Controller
 
         return View(viewModel);
     }
+
     private async Task SendOrderConfirmationEmail(Order order)
     {
-        var user = await _userManager.FindByIdAsync(order.UserId);
-        var email = user.Email;
+        var buyer = await _userManager.FindByIdAsync(order.UserId);
+        var sellers = new List<ApplicationUser>();
 
-        var message = new MimeMessage();
-        message.From.Add(new MailboxAddress("Your Store", "no-reply@yourstore.com"));
-        message.To.Add(new MailboxAddress(user.UserName, email));
-        message.Subject = "Order Confirmation - Order #" + order.OrderId;
-
-        // Create the HTML body of the email
-        var bodyBuilder = new BodyBuilder
+        // Get unique sellers for the products in the order
+        foreach (var orderItem in order.OrderItems)
         {
-            HtmlBody = $@"
+            var seller = await _userManager.FindByIdAsync(orderItem.Product.CreatedByUserId);
+            if (seller != null && !sellers.Contains(seller))
+            {
+                sellers.Add(seller);
+            }
+        }
+
+        var subject = $"Order Confirmation - Order #{order.OrderId}";
+
+        // Pass buyerName and sellers' info
+        var message = BuildOrderConfirmationEmailBody(order, buyer.UserName, sellers);
+
+        await _emailService.SendEmailAsync(buyer.Email, subject, message);
+    }
+
+    private string BuildOrderConfirmationEmailBody(Order order, string buyerName, List<ApplicationUser> sellers)
+    {
+        var sellerInfo = string.Join("<br/>", sellers.Select(s => $@"
+        <p><strong>Seller Name:</strong> {s.UserName}</p>
+        <p><strong>Email:</strong> {s.Email}</p>
+        <p><strong>Phone:</strong> {s.PhoneNumber ?? "Not provided"}</p>"));
+
+        return $@"
         <h1>Thank you for your order!</h1>
-        <p>Hi {user.UserName},</p>
+        <p>Hi {buyerName},</p>
         <p>We have received your order and it is currently being processed. Here are your order details:</p>
         <h2>Order #{order.OrderId}</h2>
         <p><strong>Order Date:</strong> {order.OrderDate:f}</p>
         <p><strong>Total Amount:</strong> {order.TotalAmount:C}</p>
         <p><strong>Shipping Address:</strong> {order.ShippingAddress}</p>
         <p><strong>Payment Method:</strong> {order.PaymentMethod}</p>
+
+        <h3>Seller Contact Information:</h3>
+        {sellerInfo}
+
         <h3>Order Items</h3>
         <table border='1' cellpadding='5' cellspacing='0' width='100%'>
             <thead>
@@ -196,63 +239,43 @@ public class CheckoutController : Controller
                     </tr>"))}
             </tbody>
         </table>
-        <p>If you have any questions, please contact our support team.</p>
-        <p>Best regards,<br>Your Store Team</p>"
-        };
 
-        // Create the plain text body as a fallback
-        bodyBuilder.TextBody = $@"
-    Thank you for your order!
-
-    Hi {user.UserName},
-
-    We have received your order and it is currently being processed. Here are your order details:
-
-    Order #{order.OrderId}
-    Order Date: {order.OrderDate:f}
-    Total Amount: {order.TotalAmount:C}
-    Shipping Address: {order.ShippingAddress}
-    Payment Method: {order.PaymentMethod}
-
-    Order Items:
-    {string.Join("\n", order.OrderItems.Select(item => $@"
-        Product: {item.Product.Name}
-        Quantity: {item.Quantity}
-        Price: {item.PriceAtTimeOfPurchase:C}
-        Total: {(item.Quantity * item.PriceAtTimeOfPurchase):C}
-    "))}
-
-    If you have any questions, please contact our support team.
-
-    Best regards,
-    Your Store Team";
-
-        message.Body = bodyBuilder.ToMessageBody();
-
-        await SendEmailAsync(message);
+        <p>If you have any questions, please contact the seller or our support team.</p>
+        <p>Best regards,<br>Your Store Team</p>";
     }
 
     private async Task SendSellerNotificationEmails(Order order)
     {
-        foreach (var sellerGroup in order.OrderItems.GroupBy(oi => oi.Product.CreatedByUser))
+        var buyer = await _userManager.FindByIdAsync(order.UserId);
+
+        foreach (var sellerGroup in order.OrderItems
+            .Where(oi => !string.IsNullOrEmpty(oi.Product.CreatedByUserId)) // Ensure CreatedByUserId is not null or empty
+            .GroupBy(oi => oi.Product.CreatedByUserId))
         {
-            var seller = sellerGroup.Key;
-            var sellerEmail = seller.Email;
-            var items = sellerGroup.ToList();
+            var sellerUserId = sellerGroup.Key;
+            var seller = await _userManager.FindByIdAsync(sellerUserId);
 
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Green Market", "no-reply@greenmarket.com"));
-            message.To.Add(new MailboxAddress(seller.UserName, sellerEmail));
-            message.Subject = $"New Order - Items Sold in Order #{order.OrderId}";
-
-            // HTML Body for email
-            var bodyBuilder = new BodyBuilder
+            if (seller == null)
             {
-                HtmlBody = $@"
-            <h1>New Order: #{order.OrderId}</h1>
-            <p>Hi {seller.UserName},</p>
+                Console.WriteLine($"Warning: Seller with ID {sellerUserId} is null for some order items in Order #{order.OrderId}.");
+                continue;
+            }
+
+            var subject = $"New Order - Items Sold in Order #{order.OrderId}";
+            var message = BuildSellerNotificationEmailBody(sellerGroup, order.OrderId, seller.UserName, buyer.UserName, buyer.Email, order.ShippingAddress);
+
+            // Send the email to the seller
+            await _emailService.SendEmailAsync(seller.Email, subject, message);
+        }
+    }
+
+    private string BuildSellerNotificationEmailBody(IGrouping<string, OrderItem> sellerGroup, int orderId, string sellerName, string buyerName, string buyerEmail, string shippingAddress)
+    {
+        return $@"
+            <h1>New Order: #{orderId}</h1>
+            <p>Hi {sellerName},</p>
             <p>You have sold the following items:</p>
-            <table border='1'>
+            <table border='1' cellpadding='5' cellspacing='0' width='100%'>
                 <thead>
                     <tr>
                         <th>Product</th>
@@ -262,57 +285,22 @@ public class CheckoutController : Controller
                     </tr>
                 </thead>
                 <tbody>
-                    {string.Join("", items.Select(item => $@"
-                    <tr>
-                        <td>{item.Product.Name}</td>
-                        <td>{item.Quantity}</td>
-                        <td>{item.PriceAtTimeOfPurchase:C}</td>
-                        <td>{item.Quantity * item.PriceAtTimeOfPurchase:C}</td>
-                    </tr>"))}
+                    {string.Join("", sellerGroup.Select(item => $@"
+                        <tr>
+                            <td>{item.Product.Name}</td>
+                            <td>{item.Quantity}</td>
+                            <td>{item.PriceAtTimeOfPurchase:C}</td>
+                            <td>{item.Quantity * item.PriceAtTimeOfPurchase:C}</td>
+                        </tr>"))}
                 </tbody>
             </table>
-            <p>Please arrange the delivery of these items with the buyer.</p>"
-            };
 
-            bodyBuilder.TextBody = $@"
-        New Order: #{order.OrderId}
-        Hi {seller.UserName},
+            <h3>Buyer Contact Information</h3>
+            <p><strong>Buyer Name:</strong> {buyerName}</p>
+            <p><strong>Email:</strong> {buyerEmail}</p>
+            <p><strong>Shipping Address:</strong> {shippingAddress}</p>
 
-        You have sold the following items:
-
-        {string.Join("\n", items.Select(item => $@"
-            Product: {item.Product.Name}
-            Quantity: {item.Quantity}
-            Price: {item.PriceAtTimeOfPurchase:C}
-            Total: {item.Quantity * item.PriceAtTimeOfPurchase:C}
-        "))}
-
-        Please arrange the delivery of these items with the buyer.";
-
-            message.Body = bodyBuilder.ToMessageBody();
-
-            await SendEmailAsync(message);
-        }
-    }
-
-    // This is the common method to send email
-    private async Task SendEmailAsync(MimeMessage message)
-    {
-        try
-        {
-            using (var client = new SmtpClient())
-            {
-                await client.ConnectAsync("smtp.gmail.com", 587, false);
-                await client.AuthenticateAsync(Environment.GetEnvironmentVariable("SMTP_USER"), Environment.GetEnvironmentVariable("SMTP_PASS"));
-                await client.SendAsync(message);
-                await client.DisconnectAsync(true);
-            }
-        }
-        catch (Exception ex)
-        {
-            // Log the error
-            Console.WriteLine($"Failed to send email: {ex.Message}");
-            // Consider logging with a proper logging framework here
-        }
+            <p>Please arrange the delivery of these items with the buyer. If you have any questions, feel free to contact us.</p>
+            <p>Best regards,<br>Your Store Team</p>";
     }
 }

@@ -117,5 +117,16 @@ namespace GreenMarketBackend.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+        [HttpGet]
+        public async Task<int> GetCartItemCount()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var cart = await _context.Carts
+                .Include(c => c.CartItems)
+                .FirstOrDefaultAsync(c => c.UserId == userId);
+
+            // Return the count of distinct cart items (each product counts only once)
+            return cart?.CartItems.Select(ci => ci.ProductId).Distinct().Count() ?? 0;
+        }
     }
 }

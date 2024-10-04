@@ -58,6 +58,7 @@
                         <li class="nav-item">
                             <a class="nav-link" href="@Url.Action("Index", "Cart")">
                                 <i class="fa-solid fa-cart-shopping"></i>
+                                <span class="cart-item-count" style="display: none; background: red; color: white; border-radius: 50%; padding: 2px 6px; margin-left: 5px;">0</span>
                             </a>
                         </li>
                     </ul>
@@ -118,6 +119,23 @@
 
         // Start the SignalR connection
         connection.start().then(() => console.log('Connected to hub')).catch(err => console.error('Error connecting to hub:', err));
+
+        $(document).ready(function () {
+        $.ajax({
+            url: '@Url.Action("GetCartItemCount", "Cart")',
+            method: 'GET',
+            success: function (count) {
+                if (count > 0) {
+                    $('.cart-item-count').text(count).show();
+                } else {
+                    $('.cart-item-count').hide();
+                }
+            },
+            error: function () {
+                console.error("Error fetching cart item count");
+            }
+        });
+    });
     </script>
 </body>
 </html>

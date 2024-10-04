@@ -17,23 +17,32 @@ public class EmailService
     {
         var smtpSettings = _configuration.GetSection("SmtpSettings").Get<SmtpSettings>();
 
-        var client = new System.Net.Mail.SmtpClient(smtpSettings.Server) // Fully qualify here
+        try
         {
-            Port = smtpSettings.Port,
-            Credentials = new NetworkCredential(smtpSettings.Username, smtpSettings.Password),
-            EnableSsl = true
-        };
+            var client = new System.Net.Mail.SmtpClient(smtpSettings.Server)
+            {
+                Port = smtpSettings.Port,
+                Credentials = new NetworkCredential(smtpSettings.Username, smtpSettings.Password),
+                EnableSsl = true
+            };
 
-        var mailMessage = new MailMessage
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(smtpSettings.SenderEmail, smtpSettings.SenderName),
+                Subject = subject,
+                Body = message,
+                IsBodyHtml = true
+            };
+            mailMessage.To.Add(toEmail);
+
+            await client.SendMailAsync(mailMessage);
+        }
+        catch (Exception ex)
         {
-            From = new MailAddress(smtpSettings.SenderEmail, smtpSettings.SenderName),
-            Subject = subject,
-            Body = message,
-            IsBodyHtml = true,
-        };
-        mailMessage.To.Add(toEmail);
-
-        await client.SendMailAsync(mailMessage);
+            // Log exception or notify admins
+            Console.WriteLine($"Failed to send email: {ex.Message}");
+            throw; // Re-throw to ensure the calling method is aware of the failure
+        }
     }
 }
 

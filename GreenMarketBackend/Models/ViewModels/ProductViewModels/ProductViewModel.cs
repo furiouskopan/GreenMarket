@@ -34,7 +34,7 @@ namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
         public DateTime HarvestDate { get; set; }
 
         [Required]
-        public int ParentCategoryId { get; set; }
+        public int? ParentCategoryId { get; set; }
 
         public IEnumerable<SelectListItem> ParentCategories { get; set; }
 

@@ -128,13 +128,36 @@ namespace GreenMarketBackend.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductViewModel model)
         {
+            // Repopulate parent categories before checking the ModelState
+            model.ParentCategories = await _context.Categories
+                .Where(c => c.ParentCategoryId == null)
+                .Select(c => new SelectListItem
+                {
+                    Value = c.CategoryId.ToString(),
+                    Text = c.Name,
+                    Selected = c.CategoryId == model.ParentCategoryId // Maintain selection if it was set
+                })
+                .ToListAsync();
+
+            if (model.ParentCategoryId.HasValue)
+            {
+                model.ChildCategories = await _context.Categories
+                    .Where(c => c.ParentCategoryId == model.ParentCategoryId)
+                    .Select(c => new SelectListItem
+                    {
+                        Value = c.CategoryId.ToString(),
+                        Text = c.Name,
+                        Selected = c.CategoryId == model.ChildCategoryId // Maintain selection if it was set
+                    })
+                    .ToListAsync();
+            }
+
             if (ModelState.IsValid)
             {
                 // Ensure at least 3 images are provided
                 if (model.ImageFiles.Count < 3)
                 {
                     ModelState.AddModelError("", "At least 3 images are required.");
-                    ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", model.CategoryId);
                     return View(model);
                 }
 
@@ -151,18 +174,19 @@ namespace GreenMarketBackend.Controllers
                     HarvestDate = model.HarvestDate,
                     CreatedByUserId = user.Id,
                     IsAvailable = true,
-                    CategoryId = model.CategoryId,
+                    CategoryId = model.ChildCategoryId // Set the child category
                 };
 
+                // Handle image uploads
                 for (int i = 0; i < model.ImageFiles.Count; i++)
                 {
                     var imageFile = model.ImageFiles[i];
-                    var imageUrl = await SaveImageAsync(imageFile); // SaveImageAsync should store the image and return the URL
+                    var imageUrl = await SaveImageAsync(imageFile); // Save the image and return the URL
 
                     var productImage = new ProductImage
                     {
                         ImageUrl = imageUrl,
-                        IsMain = i == model.MainImageIndex // Mark the image as the main image if it's the selected one
+                        IsMain = i == model.MainImageIndex // Set main image based on selection
                     };
 
                     product.Images.Add(productImage);
@@ -174,7 +198,30 @@ namespace GreenMarketBackend.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name", model.CategoryId);
+            // Repopulate categories if the model state is invalid
+            model.ParentCategories = await _context.Categories
+                .Where(c => c.ParentCategoryId == null)
+                .Select(c => new SelectListItem
+                {
+                    Value = c.CategoryId.ToString(),
+                    Text = c.Name,
+                    Selected = c.CategoryId == model.ParentCategoryId
+                })
+                .ToListAsync();
+
+            if (model.ParentCategoryId.HasValue)
+            {
+                model.ChildCategories = await _context.Categories
+                    .Where(c => c.ParentCategoryId == model.ParentCategoryId)
+                    .Select(c => new SelectListItem
+                    {
+                        Value = c.CategoryId.ToString(),
+                        Text = c.Name,
+                        Selected = c.CategoryId == model.ChildCategoryId
+                    })
+                    .ToListAsync();
+            }
+
             return View(model);
         }
 

@@ -6,103 +6,107 @@
     Layout = "_NavBar";
 }
 
-<h1>Edit Product</h1>
+<div class="m-4">
 
-<h4>Product</h4>
-<hr />
-<div class="row">
-    <div class="col-md-12">
-        <form asp-action="Edit" method="post" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="ProductId" />
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <textarea asp-for="Description" class="form-control"></textarea>
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Price" class="control-label"></label>
-                <input asp-for="Price" class="form-control" />
-                <span asp-validation-for="Price" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="StockQuantity" class="control-label"></label>
-                <input asp-for="StockQuantity" class="form-control" />
-                <span asp-validation-for="StockQuantity" class="text-danger"></span>
-            </div>
+    <h1>Edit Product</h1>
 
-            <!-- Display existing images -->
-            <div class="form-group mb-3">
-                <label class="form-label">Existing Images</label>
-                <div class="row">
-                    @for (int i = 0; i < Model.ExistingImageUrls.Count; i++)
-                    {
-                        <div class="col-md-3">
-                            <img src="@Url.Content("~/" + Model.ExistingImageUrls[i])" class="img-thumbnail" alt="Product Image" />
-
-                            <!-- Checkbox to mark images for removal -->
-                            <div class="form-check">
-                                <input type="checkbox" name="RemoveImages" value="@Model.ExistingImageUrls[i]" class="form-check-input" />
-                                <label class="form-check-label">Remove this image</label>
-                            </div>
-
-                            <!-- Radio button to select this image as the main image -->
-                            <div class="form-check">
-                                <input type="radio" name="MainImageUrl" value="@Model.ExistingImageUrls[i]"
-                                       class="form-check-input" @(Model.ExistingImageUrls[i] == Model.MainImageUrl ? "checked" : "") />
-                                <label class="form-check-label">Set as Main</label>
-                            </div>
-                        </div>
-                    }
+    <h4>Product</h4>
+    <hr />
+    <div class="row">
+        <div class="col-md-12">
+            <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="ProductId" />
+                <div class="form-group">
+                    <label asp-for="Name" class="control-label"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Description" class="control-label"></label>
+                    <textarea asp-for="Description" class="form-control"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Price" class="control-label"></label>
+                    <input asp-for="Price" class="form-control" />
+                    <span asp-validation-for="Price" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="StockQuantity" class="control-label"></label>
+                    <input asp-for="StockQuantity" class="form-control" />
+                    <span asp-validation-for="StockQuantity" class="text-danger"></span>
                 </div>
 
-            <!-- Upload new images -->
-            <div class="form-group mb-3">
-                <label class="form-label">Add New Images</label>
-                <input type="file" name="ImageFiles" multiple class="form-control" />
-            </div>
+                <!-- Display existing images -->
+                <div class="form-group">
+                    <label class="form-label">Existing Images</label>
+                    <div class="row">
+                        @for (int i = 0; i < Model.ExistingImageUrls.Count; i++)
+                        {
+                            <div class="col-md-3">
+                                <img src="@Url.Content("~/" + Model.ExistingImageUrls[i])" class="img-thumbnail" alt="Product Image" />
 
-            <div class="form-group">
-                <label asp-for="Pesticides" class="control-label"></label>
-                <input asp-for="Pesticides" class="form-control" />
-                <span asp-validation-for="Pesticides" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Origin" class="control-label"></label>
-                <input asp-for="Origin" class="form-control" />
-                <span asp-validation-for="Origin" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="HarvestDate" class="control-label"></label>
-                <input asp-for="HarvestDate" class="form-control" type="date" />
-                <span asp-validation-for="HarvestDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label for="ParentCategoryId" class="control-label">Parent Category</label>
-                <select asp-for="ParentCategoryId" asp-items="Model.ParentCategories" class="form-control" id="ParentCategoryId">
-                    <option value="">Select Parent Category</option>
-                </select>
-                <span asp-validation-for="ParentCategoryId" class="text-danger"></span>
-            </div>
+                                <!-- Checkbox to mark images for removal -->
+                                <div class="form-check">
+                                    <input type="checkbox" name="RemoveImages" value="@Model.ExistingImageUrls[i]" class="form-check-input" />
+                                    <label class="form-check-label">Remove this image</label>
+                                </div>
 
-            <div class="form-group">
-                <label for="ChildCategoryId" class="control-label">Child Category</label>
-                <select asp-for="ChildCategoryId" asp-items="Model.ChildCategories" class="form-control" id="ChildCategoryId">
-                    <option value="">Select Child Category</option>
-                </select>
-                <span asp-validation-for="ChildCategoryId" class="text-danger"></span>
-            </div>
+                                <!-- Radio button to select this image as the main image -->
+                                <div class="form-check">
+                                    <input type="radio" name="MainImageUrl" value="@Model.ExistingImageUrls[i]"
+                                           class="form-check-input" @(Model.ExistingImageUrls[i] == Model.MainImageUrl ? "checked" : "") />
+                                    <label class="form-check-label">Set as Main</label>
+                                </div>
+                            </div>
+                        }
+                    </div>
 
-            <button type="submit" class="btn btn-primary">Save</button>
-            <a asp-action="MyProducts" class="btn btn-secondary">Cancel</a>
-        </form>
+                    <!-- Upload new images -->
+                    <div class="form-group mb-3">
+                        <label class="form-label">Add New Images</label>
+                        <input type="file" name="ImageFiles" multiple class="form-control" />
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Pesticides" class="control-label"></label>
+                        <input asp-for="Pesticides" class="form-control" />
+                        <span asp-validation-for="Pesticides" class="text-danger"></span>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label asp-for="Origin" class="control-label"></label>
+                        <input asp-for="Origin" class="form-control" />
+                        <span asp-validation-for="Origin" class="text-danger"></span>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label asp-for="HarvestDate" class="control-label"></label>
+                        <input asp-for="HarvestDate" class="form-control" type="date" />
+                        <span asp-validation-for="HarvestDate" class="text-danger"></span>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="ParentCategoryId" class="control-label">Parent Category</label>
+                        <select asp-for="ParentCategoryId" asp-items="Model.ParentCategories" class="form-control" id="ParentCategoryId">
+                            <option value="">Select Parent Category</option>
+                        </select>
+                        <span asp-validation-for="ParentCategoryId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="ChildCategoryId" class="control-label">Child Category</label>
+                        <select asp-for="ChildCategoryId" asp-items="Model.ChildCategories" class="form-control" id="ChildCategoryId">
+                            <option value="">Select Child Category</option>
+                        </select>
+                        <span asp-validation-for="ChildCategoryId" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a asp-action="MyProducts" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
     </div>
 </div>
+
 
 @section Scripts {
     @{

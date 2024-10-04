@@ -12,7 +12,9 @@ body {
 main {
     flex: 1;
 }
-
+h1, h2, h3 {
+    color: #18871e;
+}
 .jumbotron {
     background-image: url('https://t4.ftcdn.net/jpg/03/03/45/25/360_F_303452599_eZMGXe7awggqAHTQXpjzBFehJBEyw4QR.jpg');
     background-position: center;

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.ComponentModel.DataAnnotations;
 namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
@@ -33,9 +34,13 @@ namespace GreenMarketBackend.Models.ViewModels.ProductViewModels
         public DateTime HarvestDate { get; set; }
 
         [Required]
-        public int ParentCategoryId { get; set; }       
+        public int ParentCategoryId { get; set; }
+
+        public IEnumerable<SelectListItem> ParentCategories { get; set; }
 
         [Required]
         public int ChildCategoryId { get; set; }
+
+        public IEnumerable<SelectListItem> ChildCategories { get; set; }
     }
 }

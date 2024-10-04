@@ -76,7 +76,7 @@
             <span asp-validation-for="HarvestDate" class="text-danger"></span>
         </div>
 
-        <div class="form-group">
+        <div class="form-group mb-3">
             <label for="ParentCategoryId" class="control-label">Parent Category</label>
             <select asp-for="ParentCategoryId" asp-items="Model.ParentCategories" class="form-control" id="ParentCategoryId">
                 <option value="">Select Parent Category</option>
@@ -84,7 +84,7 @@
             <span asp-validation-for="ParentCategoryId" class="text-danger"></span>
         </div>
 
-        <div class="form-group">
+        <div class="form-group mb-3">
             <label for="ChildCategoryId" class="control-label">Child Category</label>
             <select asp-for="ChildCategoryId" asp-items="Model.ChildCategories" class="form-control" id="ChildCategoryId">
                 <option value="">Select Child Category</option>

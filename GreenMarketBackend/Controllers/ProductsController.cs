@@ -111,10 +111,16 @@ namespace GreenMarketBackend.Controllers
 
 
         // Returns the view for creating a new product
+        [HttpGet]
         public IActionResult Create()
         {
-            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "Name");
-            return View();
+            var model = new ProductViewModel
+            {
+                ParentCategories = new SelectList(_context.Categories.Where(c => c.ParentCategoryId == null), "CategoryId", "Name"),
+                ChildCategories = new SelectList(Enumerable.Empty<SelectListItem>()) // Initially empty
+            };
+
+            return View(model);
         }
 
         // Handles the POST request to create a new product
@@ -144,8 +150,8 @@ namespace GreenMarketBackend.Controllers
                     CreatedDate = DateTime.UtcNow,
                     HarvestDate = model.HarvestDate,
                     CreatedByUserId = user.Id,
+                    IsAvailable = true,
                     CategoryId = model.CategoryId,
-                    IsAvailable = true
                 };
 
                 for (int i = 0; i < model.ImageFiles.Count; i++)

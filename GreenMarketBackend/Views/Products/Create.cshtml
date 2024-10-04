@@ -76,12 +76,21 @@
             <span asp-validation-for="HarvestDate" class="text-danger"></span>
         </div>
 
-        <div class="form-group mb-3">
-            <label asp-for="CategoryId" class="form-label">Category</label>
-            <select asp-for="CategoryId" asp-items="@(ViewBag.Categories)" class="form-control"></select>
-            <span asp-validation-for="CategoryId" class="text-danger"></span>
+        <div class="form-group">
+            <label for="ParentCategoryId" class="control-label">Parent Category</label>
+            <select asp-for="ParentCategoryId" asp-items="Model.ParentCategories" class="form-control" id="ParentCategoryId">
+                <option value="">Select Parent Category</option>
+            </select>
+            <span asp-validation-for="ParentCategoryId" class="text-danger"></span>
         </div>
 
+        <div class="form-group">
+            <label for="ChildCategoryId" class="control-label">Child Category</label>
+            <select asp-for="ChildCategoryId" asp-items="Model.ChildCategories" class="form-control" id="ChildCategoryId">
+                <option value="">Select Child Category</option>
+            </select>
+            <span asp-validation-for="ChildCategoryId" class="text-danger"></span>
+        </div>
         <button type="submit" class="btn btn-success">Upload Product</button>
     </form>
 </div>
@@ -91,4 +100,19 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        $(document).ready(function () {
+            $('#ParentCategoryId').change(function () {
+                var parentId = $(this).val();
+                $.get('/Categories/GetChildCategories', { parentCategoryId: parentId }, function (data) {
+                    var childCategorySelect = $('#ChildCategoryId');
+                    childCategorySelect.empty(); // Clear the dropdown
+                    childCategorySelect.append('<option value="">Select Child Category</option>');
+                    $.each(data, function (index, category) {
+                        childCategorySelect.append('<option value="' + category.value + '">' + category.text + '</option>');
+                    });
+                });
+            });
+        });
+    </script>
 }
